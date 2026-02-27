@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>导航</title>
+  <meta name="description" content="个人导航页" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+
+  <!-- 左侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20"
+              stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span>导航</span>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav" aria-label="分类导航">
+      <!-- 由 JS 渲染 -->
+    </nav>
+  </aside>
+
+  <!-- 侧边栏遮罩（移动端） -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- 主区域 -->
+  <div class="page-main">
+
+    <!-- 顶栏（移动端汉堡菜单） -->
+    <div class="mobile-topbar">
+      <button class="hamburger" id="hamburger" aria-label="展开菜单">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="mobile-title">导航</span>
+    </div>
+
+    <!-- 搜索区 -->
+    <div class="search-section">
+      <div class="search-bar" role="search">
+        <div class="engine-picker" id="enginePicker">
+          <button class="engine-current" id="engineCurrent" aria-haspopup="listbox">
+            <span id="engineLabel">百度</span>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="engine-dropdown" id="engineDropdown" role="listbox" aria-label="选择搜索引擎">
+            <li class="engine-option active" role="option" data-engine="baidu" data-url="https://www.baidu.com/s?wd=">百度</li>
+            <li class="engine-option" role="option" data-engine="google" data-url="https://www.google.com/search?q=">谷歌</li>
+            <li class="engine-option" role="option" data-engine="bing" data-url="https://www.bing.com/search?q=">必应</li>
+          </ul>
+        </div>
+        <div class="search-divider" aria-hidden="true"></div>
+        <input
+          type="search"
+          id="searchInput"
+          class="search-input"
+          placeholder="搜索链接..."
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="搜索链接"
+        />
+        <button class="search-go" id="searchGo" aria-label="使用搜索引擎搜索">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 内容 -->
+    <main class="content-area" id="siteMain">
+      <section class="link-group hidden" id="searchResults" aria-label="搜索结果">
+        <div class="group-header">
+          <h2 class="group-title" id="searchResultTitle">搜索结果</h2>
+          <span class="group-count" id="searchResultCount"></span>
+        </div>
+        <div class="cards-grid" id="searchResultGrid"></div>
+        <p class="empty-hint hidden" id="searchEmpty">没有找到匹配的链接</p>
+      </section>
+
+      <div id="groupContainer"></div>
+
+      <section class="link-group hidden" id="uncategorizedGroup">
+        <div class="group-header">
+          <h2 class="group-title">其他</h2>
+        </div>
+        <div class="cards-grid" id="uncategorizedGrid"></div>
+      </section>
+
+      <div class="loading-state" id="loadingState" aria-live="polite">
+        <div class="loading-spinner"></div>
+        <span>加载中...</span>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <span id="footerText">Copyright &copy; 2026</span>
+    </footer>
+  </div>
+
+  <!-- 右侧浮动工具 -->
+  <div class="floating-tools" aria-label="工具栏">
+    <a class="float-btn" href="/admin/" title="管理后台" aria-label="管理后台">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </a>
+    <button class="float-btn" id="themeToggle" title="切换主题" aria-label="切换主题">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button class="float-btn" id="backTop" title="回到顶部" aria-label="回到顶部">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M18 15l-6-6-6 6" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>

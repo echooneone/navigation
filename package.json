@@ -1,0 +1,13 @@
+{
+  "name": "navigation",
+  "version": "1.0.0",
+  "description": "个人导航页 — 前后台一体化部署",
+  "private": true,
+  "scripts": {
+    "start":       "node server/index.js",
+    "dev":         "cd server && npx nodemon index.js",
+    "build:admin": "cd admin && npm install && npm run build",
+    "setup":       "npm run build:admin && echo Done. Run: npm start",
+    "install:all": "cd server && npm install && cd ../admin && npm install"
+  }
+}
