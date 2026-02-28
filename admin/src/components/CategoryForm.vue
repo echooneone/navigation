@@ -44,6 +44,16 @@
           <label class="form-label">排序权重</label>
           <input v-model.number="form.sort_order" class="form-input" type="number" min="0" />
         </div>
+
+        <!-- 私有 -->
+        <div class="form-group">
+          <label class="form-label">可见性</label>
+          <label class="toggle-label">
+            <input type="checkbox" v-model="form.is_private" class="toggle-checkbox" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-text">{{ form.is_private ? '私有（仅登录后可见）' : '公开' }}</span>
+          </label>
+        </div>
       </form>
 
       <div class="modal-footer">
@@ -65,65 +75,67 @@ const isEdit = computed(() => !!props.category)
 const form = reactive({
   name:       props.category?.name       || '',
   icon:       props.category?.icon       || '',
-  sort_order: props.category?.sort_order || 0
+  sort_order: props.category?.sort_order || 0,
+  is_private: !!props.category?.is_private
 })
 
+const ICON_COLOR = '%23374151'
 const iconPresets = [
   // 开发 & 技术
-  { label: '代码开发',    url: 'https://api.iconify.design/mdi/code-braces.svg?color=%234F6EF7' },
-  { label: '前端',        url: 'https://api.iconify.design/mdi/language-html5.svg?color=%23E44D26' },
-  { label: '后端',        url: 'https://api.iconify.design/mdi/server.svg?color=%234F6EF7' },
-  { label: '数据库',      url: 'https://api.iconify.design/mdi/database.svg?color=%230EA5E9' },
-  { label: '版本控制',    url: 'https://api.iconify.design/mdi/source-branch.svg?color=%23F59E0B' },
-  { label: '命令行',      url: 'https://api.iconify.design/mdi/console.svg?color=%230F172A' },
-  { label: 'API',         url: 'https://api.iconify.design/mdi/api.svg?color=%237C3AED' },
-  { label: '容器/云',     url: 'https://api.iconify.design/mdi/cloud-outline.svg?color=%230EA5E9' },
-  { label: '安全',        url: 'https://api.iconify.design/mdi/shield-check-outline.svg?color=%2310B981' },
-  { label: '网络',        url: 'https://api.iconify.design/mdi/web.svg?color=%234F6EF7' },
+  { label: '代码开发',    url: `https://api.iconify.design/mdi/code-braces.svg?color=${ICON_COLOR}` },
+  { label: '前端',        url: `https://api.iconify.design/mdi/language-html5.svg?color=${ICON_COLOR}` },
+  { label: '后端',        url: `https://api.iconify.design/mdi/server.svg?color=${ICON_COLOR}` },
+  { label: '数据库',      url: `https://api.iconify.design/mdi/database.svg?color=${ICON_COLOR}` },
+  { label: '版本控制',    url: `https://api.iconify.design/mdi/source-branch.svg?color=${ICON_COLOR}` },
+  { label: '命令行',      url: `https://api.iconify.design/mdi/console.svg?color=${ICON_COLOR}` },
+  { label: 'API',         url: `https://api.iconify.design/mdi/api.svg?color=${ICON_COLOR}` },
+  { label: '容器/云',     url: `https://api.iconify.design/mdi/cloud-outline.svg?color=${ICON_COLOR}` },
+  { label: '安全',        url: `https://api.iconify.design/mdi/shield-check-outline.svg?color=${ICON_COLOR}` },
+  { label: '网络',        url: `https://api.iconify.design/mdi/web.svg?color=${ICON_COLOR}` },
   // AI
-  { label: 'AI',          url: 'https://api.iconify.design/mdi/robot-outline.svg?color=%237C3AED' },
-  { label: '机器学习',    url: 'https://api.iconify.design/mdi/brain.svg?color=%23EC4899' },
+  { label: 'AI',          url: `https://api.iconify.design/mdi/robot-outline.svg?color=${ICON_COLOR}` },
+  { label: '机器学习',    url: `https://api.iconify.design/mdi/brain.svg?color=${ICON_COLOR}` },
   // 设计
-  { label: '设计',        url: 'https://api.iconify.design/mdi/palette-outline.svg?color=%23EC4899' },
-  { label: '图标',        url: 'https://api.iconify.design/mdi/vector-square.svg?color=%234F6EF7' },
-  { label: '摄影',        url: 'https://api.iconify.design/mdi/camera-outline.svg?color=%236B7280' },
+  { label: '设计',        url: `https://api.iconify.design/mdi/palette-outline.svg?color=${ICON_COLOR}` },
+  { label: '图标',        url: `https://api.iconify.design/mdi/vector-square.svg?color=${ICON_COLOR}` },
+  { label: '摄影',        url: `https://api.iconify.design/mdi/camera-outline.svg?color=${ICON_COLOR}` },
   // 效率 & 办公
-  { label: '效率工具',    url: 'https://api.iconify.design/mdi/check-circle-outline.svg?color=%2310B981' },
-  { label: '笔记',        url: 'https://api.iconify.design/mdi/notebook-outline.svg?color=%23F59E0B' },
-  { label: '日历',        url: 'https://api.iconify.design/mdi/calendar-outline.svg?color=%230EA5E9' },
-  { label: '文件管理',    url: 'https://api.iconify.design/mdi/folder-outline.svg?color=%23F59E0B' },
-  { label: '文档',        url: 'https://api.iconify.design/mdi/file-document-outline.svg?color=%230EA5E9' },
-  { label: '协作',        url: 'https://api.iconify.design/mdi/account-group-outline.svg?color=%234F6EF7' },
+  { label: '效率工具',    url: `https://api.iconify.design/mdi/check-circle-outline.svg?color=${ICON_COLOR}` },
+  { label: '笔记',        url: `https://api.iconify.design/mdi/notebook-outline.svg?color=${ICON_COLOR}` },
+  { label: '日历',        url: `https://api.iconify.design/mdi/calendar-outline.svg?color=${ICON_COLOR}` },
+  { label: '文件管理',    url: `https://api.iconify.design/mdi/folder-outline.svg?color=${ICON_COLOR}` },
+  { label: '文档',        url: `https://api.iconify.design/mdi/file-document-outline.svg?color=${ICON_COLOR}` },
+  { label: '协作',        url: `https://api.iconify.design/mdi/account-group-outline.svg?color=${ICON_COLOR}` },
   // 社交 & 通讯
-  { label: '社交媒体',    url: 'https://api.iconify.design/mdi/share-variant-outline.svg?color=%234F6EF7' },
-  { label: '即时通讯',    url: 'https://api.iconify.design/mdi/chat-outline.svg?color=%2310B981' },
-  { label: '邮件',        url: 'https://api.iconify.design/mdi/email-outline.svg?color=%23EF4444' },
+  { label: '社交媒体',    url: `https://api.iconify.design/mdi/share-variant-outline.svg?color=${ICON_COLOR}` },
+  { label: '即时通讯',    url: `https://api.iconify.design/mdi/chat-outline.svg?color=${ICON_COLOR}` },
+  { label: '邮件',        url: `https://api.iconify.design/mdi/email-outline.svg?color=${ICON_COLOR}` },
   // 内容 & 媒体
-  { label: '视频',        url: 'https://api.iconify.design/mdi/play-circle-outline.svg?color=%23EF4444' },
-  { label: '音乐',        url: 'https://api.iconify.design/mdi/music-note.svg?color=%2310B981' },
-  { label: '阅读',        url: 'https://api.iconify.design/mdi/book-open-outline.svg?color=%234F6EF7' },
-  { label: '播客',        url: 'https://api.iconify.design/mdi/podcast.svg?color=%237C3AED' },
-  { label: '新闻',        url: 'https://api.iconify.design/mdi/newspaper.svg?color=%236B7280' },
+  { label: '视频',        url: `https://api.iconify.design/mdi/play-circle-outline.svg?color=${ICON_COLOR}` },
+  { label: '音乐',        url: `https://api.iconify.design/mdi/music-note.svg?color=${ICON_COLOR}` },
+  { label: '阅读',        url: `https://api.iconify.design/mdi/book-open-outline.svg?color=${ICON_COLOR}` },
+  { label: '播客',        url: `https://api.iconify.design/mdi/podcast.svg?color=${ICON_COLOR}` },
+  { label: '新闻',        url: `https://api.iconify.design/mdi/newspaper.svg?color=${ICON_COLOR}` },
   // 学习
-  { label: '学习',        url: 'https://api.iconify.design/mdi/school-outline.svg?color=%23F59E0B' },
-  { label: '教程',        url: 'https://api.iconify.design/mdi/teach.svg?color=%230EA5E9' },
+  { label: '学习',        url: `https://api.iconify.design/mdi/school-outline.svg?color=${ICON_COLOR}` },
+  { label: '教程',        url: `https://api.iconify.design/mdi/teach.svg?color=${ICON_COLOR}` },
   // 生活
-  { label: '购物',        url: 'https://api.iconify.design/mdi/shopping-outline.svg?color=%23EC4899' },
-  { label: '美食',        url: 'https://api.iconify.design/mdi/food-outline.svg?color=%23F59E0B' },
-  { label: '出行',        url: 'https://api.iconify.design/mdi/airplane.svg?color=%230EA5E9' },
-  { label: '健康',        url: 'https://api.iconify.design/mdi/heart-outline.svg?color=%23EF4444' },
-  { label: '地图',        url: 'https://api.iconify.design/mdi/map-outline.svg?color=%2310B981' },
+  { label: '购物',        url: `https://api.iconify.design/mdi/shopping-outline.svg?color=${ICON_COLOR}` },
+  { label: '美食',        url: `https://api.iconify.design/mdi/food-outline.svg?color=${ICON_COLOR}` },
+  { label: '出行',        url: `https://api.iconify.design/mdi/airplane.svg?color=${ICON_COLOR}` },
+  { label: '健康',        url: `https://api.iconify.design/mdi/heart-outline.svg?color=${ICON_COLOR}` },
+  { label: '地图',        url: `https://api.iconify.design/mdi/map-outline.svg?color=${ICON_COLOR}` },
   // 其他
-  { label: '游戏',        url: 'https://api.iconify.design/mdi/gamepad-variant-outline.svg?color=%237C3AED' },
-  { label: '金融',        url: 'https://api.iconify.design/mdi/currency-usd.svg?color=%2310B981' },
-  { label: '搜索',        url: 'https://api.iconify.design/mdi/magnify.svg?color=%234F6EF7' },
-  { label: '工具箱',      url: 'https://api.iconify.design/mdi/toolbox-outline.svg?color=%236B7280' },
-  { label: '主页',        url: 'https://api.iconify.design/mdi/home-outline.svg?color=%234F6EF7' },
-  { label: '收藏',        url: 'https://api.iconify.design/mdi/star-outline.svg?color=%23F59E0B' },
-  { label: '下载',        url: 'https://api.iconify.design/mdi/download-outline.svg?color=%236B7280' },
-  { label: '设置',        url: 'https://api.iconify.design/mdi/cog-outline.svg?color=%236B7280' },
-  { label: '资源',        url: 'https://api.iconify.design/mdi/package-variant-closed.svg?color=%23F59E0B' },
-  { label: '导航',        url: 'https://api.iconify.design/mdi/compass-outline.svg?color=%234F6EF7' },
+  { label: '游戏',        url: `https://api.iconify.design/mdi/gamepad-variant-outline.svg?color=${ICON_COLOR}` },
+  { label: '金融',        url: `https://api.iconify.design/mdi/currency-usd.svg?color=${ICON_COLOR}` },
+  { label: '搜索',        url: `https://api.iconify.design/mdi/magnify.svg?color=${ICON_COLOR}` },
+  { label: '工具箱',      url: `https://api.iconify.design/mdi/toolbox-outline.svg?color=${ICON_COLOR}` },
+  { label: '主页',        url: `https://api.iconify.design/mdi/home-outline.svg?color=${ICON_COLOR}` },
+  { label: '收藏',        url: `https://api.iconify.design/mdi/star-outline.svg?color=${ICON_COLOR}` },
+  { label: '下载',        url: `https://api.iconify.design/mdi/download-outline.svg?color=${ICON_COLOR}` },
+  { label: '设置',        url: `https://api.iconify.design/mdi/cog-outline.svg?color=${ICON_COLOR}` },
+  { label: '资源',        url: `https://api.iconify.design/mdi/package-variant-closed.svg?color=${ICON_COLOR}` },
+  { label: '导航',        url: `https://api.iconify.design/mdi/compass-outline.svg?color=${ICON_COLOR}` },
 ]
 
 function handleSave() {
@@ -173,6 +185,21 @@ function handleSave() {
   transition: border-color 0.15s, transform 0.15s;
 }
 .icon-preset-btn:hover { border-color: var(--color-primary); transform: scale(1.1); }
-.icon-preset-btn.active { border-color: var(--color-primary); background: #EEF2FF; }
+.icon-preset-btn.active { border-color: var(--color-primary); background: var(--color-primary-light); }
 .icon-preset-btn img { width: 20px; height: 20px; object-fit: contain; display: block; }
+
+.toggle-label { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.toggle-checkbox { display: none; }
+.toggle-track {
+  width: 40px; height: 22px; background: var(--color-border);
+  border-radius: 11px; position: relative; transition: background 0.2s;
+}
+.toggle-checkbox:checked + .toggle-track { background: var(--color-primary); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff;
+  border-radius: 50%; transition: left 0.2s;
+}
+.toggle-checkbox:checked + .toggle-track .toggle-thumb { left: 21px; }
+.toggle-text { font-size: 13px; color: var(--color-text-secondary); }
 </style>

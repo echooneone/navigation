@@ -21,6 +21,20 @@
   --header-h:  56px;
 }
 
+/* 深色主题变量 */
+[data-theme="dark"] {
+  --color-bg:             #0F1117;
+  --color-surface:        #1A1C26;
+  --color-text:           #E5E7EB;
+  --color-text-secondary: #9CA3AF;
+  --color-border:         #272935;
+  --color-primary-light:  #1E274A;
+  --color-primary-dark:   #6080FF;
+}
+[data-theme="dark"] .badge-success { background: #14532D; color: #86EFAC; }
+[data-theme="dark"] .badge-warning { background: #451A03; color: #FCD34D; }
+[data-theme="dark"] .modal-box     { box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+
 html, body { height: 100%; }
 
 body {

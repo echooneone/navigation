@@ -2,7 +2,7 @@
   <div class="dashboard">
     <div class="stats-grid">
       <div class="stat-card card">
-        <div class="stat-icon" style="background:#EEF1FE;color:#4F6EF7">
+        <div class="stat-icon stat-icon-primary">
           <svg viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <div>
@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="stat-card card">
-        <div class="stat-icon" style="background:#F0FDF4;color:#10B981">
+        <div class="stat-icon stat-icon-success">
           <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <div>
@@ -20,7 +20,7 @@
         </div>
       </div>
       <div class="stat-card card">
-        <div class="stat-icon" style="background:#FFF7ED;color:#F59E0B">
+        <div class="stat-icon stat-icon-warning">
           <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </div>
         <div>
@@ -123,15 +123,10 @@ const catStats = computed(() => {
   gap: 14px;
   padding: 16px 18px;
 }
-.stat-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+.stat-icon { width: 44px; height: 44px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.stat-icon-primary { background: rgba(79, 110, 247, 0.12); color: #4F6EF7; }
+.stat-icon-success { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+.stat-icon-warning { background: rgba(245, 158, 11,  0.12); color: #F59E0B; }
 .stat-icon svg { width: 22px; height: 22px; }
 .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
 .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 2px; }

@@ -7,22 +7,10 @@
           <path d="M12 2a14.5 14.5 0 0 0 0 20M12 2a14.5 14.5 0 0 1 0 20M2 12h20" stroke="currentColor" stroke-width="2"/>
         </svg>
         <h1>导航管理后台</h1>
-        <p>请使用管理员账号登录</p>
+        <p>请输入管理员密码</p>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label class="form-label" for="username">用户名</label>
-          <input
-            id="username"
-            v-model="form.username"
-            class="form-input"
-            type="text"
-            placeholder="admin"
-            autocomplete="username"
-            required
-          />
-        </div>
         <div class="form-group">
           <label class="form-label" for="password">密码</label>
           <input
@@ -41,6 +29,7 @@
         </button>
         <p v-if="errorMsg" class="login-error">{{ errorMsg }}</p>
       </form>
+
     </div>
   </div>
 </template>
@@ -53,7 +42,7 @@ import { useAuthStore } from '@/stores/auth.js'
 const auth   = useAuthStore()
 const router = useRouter()
 
-const form = reactive({ username: '', password: '' })
+const form = reactive({ password: '' })
 const loading   = ref(false)
 const errorMsg  = ref('')
 
@@ -61,10 +50,10 @@ async function handleLogin() {
   errorMsg.value = ''
   loading.value = true
   try {
-    await auth.login(form.username, form.password)
+    await auth.login(form.password)
     router.push({ name: 'Dashboard' })
   } catch (err) {
-    errorMsg.value = err.response?.data?.message || '登录失败，请检查用户名和密码'
+    errorMsg.value = err.response?.data?.message || '密码错误，请重试'
   } finally {
     loading.value = false
   }
@@ -110,7 +99,7 @@ async function handleLogin() {
   font-size: 0.83rem;
   color: var(--color-danger);
   padding: 8px 12px;
-  background: #FEF2F2;
+  background: rgba(239, 68, 68, 0.12);
   border-radius: var(--radius-md);
 }
 </style>

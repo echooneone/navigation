@@ -98,6 +98,16 @@
           <label class="form-label">排序权重</label>
           <input v-model.number="form.sort_order" class="form-input" type="number" min="0" placeholder="0（数值越小越靠前）" />
         </div>
+
+        <!-- 私有 -->
+        <div class="form-group">
+          <label class="form-label">可见性</label>
+          <label class="toggle-label">
+            <input type="checkbox" v-model="form.is_private" class="toggle-checkbox" />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-text">{{ form.is_private ? '私有（仅登录后可见）' : '公开' }}</span>
+          </label>
+        </div>
       </form>
 
       <div class="modal-footer">
@@ -129,7 +139,8 @@ const form = reactive({
   description: props.link?.description || '',
   icon:        props.link?.icon        || '',
   category_id: props.link?.category_id ?? null,
-  sort_order:  props.link?.sort_order  || 0
+  sort_order:  props.link?.sort_order  || 0,
+  is_private:  !!props.link?.is_private
 })
 
 const fetchingFavicon = ref(false)
@@ -338,6 +349,21 @@ async function handleSave() {
   transition: border-color 0.15s, transform 0.15s;
 }
 .icon-preset-btn:hover { border-color: var(--color-primary); transform: scale(1.1); }
-.icon-preset-btn.active { border-color: var(--color-primary); background: #EEF2FF; }
+.icon-preset-btn.active { border-color: var(--color-primary); background: var(--color-primary-light); }
 .icon-preset-btn img { width: 20px; height: 20px; object-fit: contain; display: block; }
+
+.toggle-label { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.toggle-checkbox { display: none; }
+.toggle-track {
+  width: 40px; height: 22px; background: var(--color-border);
+  border-radius: 11px; position: relative; transition: background 0.2s;
+}
+.toggle-checkbox:checked + .toggle-track { background: var(--color-primary); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 16px; height: 16px; background: #fff;
+  border-radius: 50%; transition: left 0.2s;
+}
+.toggle-checkbox:checked + .toggle-track .toggle-thumb { left: 21px; }
+.toggle-text { font-size: 13px; color: var(--color-text-secondary); }
 </style>

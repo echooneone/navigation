@@ -65,13 +65,35 @@
         </div>
       </div>
 
-      <!-- 关于 -->
+      <!-- 前台显示 -->
       <div class="card">
-        <h2 class="section-title">关于</h2>
-        <div class="about-content text-sm text-secondary">
-          <p>个人导航页 v1.0</p>
-          <p style="margin-top:6px">技术栈：Express + SQLite + Vue 3 + Vite</p>
-          <p style="margin-top:6px"><a href="/" style="color:var(--color-primary)">查看前台</a></p>
+        <h2 class="section-title">前台显示模式</h2>
+        <div class="settings-form">
+          <div class="mode-options">
+            <label class="mode-option" :class="{ active: siteForm.scroll_mode === 'scroll' }">
+              <input type="radio" v-model="siteForm.scroll_mode" value="scroll" style="display:none" />
+              <div class="mode-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><line x1="8" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="10" x2="16" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="8" y1="14" x2="13" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="19" x2="12" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polyline points="10 21 12 23 14 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="mode-text">
+                <span class="mode-name">普通滚动</span>
+                <span class="mode-desc">传统垂直滚动浏览，所有分类一页展示</span>
+              </div>
+            </label>
+            <label class="mode-option" :class="{ active: siteForm.scroll_mode === 'page' }">
+              <input type="radio" v-model="siteForm.scroll_mode" value="page" style="display:none" />
+              <div class="mode-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/><polyline points="7 10 4 12 7 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="17 10 20 12 17 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="mode-text">
+                <span class="mode-name">分页滑动</span>
+                <span class="mode-desc">每个分类一屏，左右滑动切换，底部小圆点指示</span>
+              </div>
+            </label>
+          </div>
+          <button class="btn btn-primary" :disabled="siteLoading" @click="handleSaveSite">
+            {{ siteLoading ? '保存中...' : '保存设置' }}
+          </button>
         </div>
       </div>
     </div>
@@ -136,20 +158,21 @@ async function handleImport(e) {
 }
 
 // 站点设置
-const siteForm = reactive({ footer_text: '' })
+const siteForm = reactive({ footer_text: '', scroll_mode: 'scroll' })
 const siteLoading = ref(false)
 
 onMounted(async () => {
   try {
     const res = await api.get('/settings')
     siteForm.footer_text = res.data.data?.footer_text || ''
+    siteForm.scroll_mode = res.data.data?.scroll_mode || 'scroll'
   } catch {}
 })
 
 async function handleSaveSite() {
   siteLoading.value = true
   try {
-    await api.put('/settings', { footer_text: siteForm.footer_text })
+    await api.put('/settings', { footer_text: siteForm.footer_text, scroll_mode: siteForm.scroll_mode })
     showToast('设置已保存', 'success')
   } catch {}
   finally { siteLoading.value = false }
@@ -171,6 +194,22 @@ async function handleSaveSite() {
 .backup-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .backup-item-title { font-weight: 500; font-size: 0.875rem; }
 
-.about-content p { line-height: 1.6; }
 .form-hint { font-size: 0.786rem; color: var(--color-text-secondary); margin-top: 4px; }
+
+/* 模式选项 */
+.mode-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.mode-option {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+.mode-option:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+.mode-option.active { border-color: var(--color-primary); background: var(--color-primary-light); }
+.mode-icon { flex-shrink: 0; color: var(--color-primary); }
+.mode-text { display: flex; flex-direction: column; gap: 2px; }
+.mode-name { font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
+.mode-desc { font-size: 0.78rem; color: var(--color-text-secondary); }
 </style>

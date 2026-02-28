@@ -15,6 +15,7 @@
   --color-sidebar-text:   #374151;
 
   --sidebar-w: 200px;
+  --sidebar-collapsed-w: 52px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -75,6 +76,7 @@ ul { list-style: none; }
   top: 0;
   height: 100dvh;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--color-sidebar-bg);
   border-right: 1px solid var(--color-border);
   display: flex;
@@ -88,21 +90,44 @@ ul { list-style: none; }
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 24px 20px 20px;
-  font-weight: 800;
-  font-size: 1rem;
-  color: var(--color-primary);
+  justify-content: flex-end;
+  padding: 14px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
-  letter-spacing: -0.03em;
 }
-.sidebar-logo svg { width: 18px; height: 18px; flex-shrink: 0; }
-.sidebar-logo span { color: var(--color-text); }
+
+/* 收起按钮 - 居中展示 */
+.sidebar-collapse-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+  flex-shrink: 0;
+}
+.sidebar-collapse-btn:hover { background: var(--color-sidebar-hover); color: var(--color-text); }
+.sidebar-collapse-btn svg { width: 14px; height: 14px; }
+
+/* 折叠态 */
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-w);
+}
+.sidebar.collapsed .sidebar-collapse-btn {
+  transform: rotate(180deg);
+}
+.sidebar.collapsed .sidebar-item {
+  border-left-color: transparent !important;
+}
+.sidebar.collapsed .sidebar-item.active {
+  border-left-color: transparent !important;
+}
 
 .sidebar-nav {
   flex: 1;
-  padding: 12px 10px;
+  padding: 12px 8px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -125,7 +150,8 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
+  /* 8+2+6=16px → 20px icon 右辶=36px → 在 52px 折叠态中居中 (center=26px) */
+  padding: 8px 8px 8px 6px;
   font-size: 1.025rem;
   font-weight: 500;
   color: var(--color-sidebar-text);
@@ -134,7 +160,6 @@ ul { list-style: none; }
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   user-select: none;
   margin-bottom: 2px;
   border-left: 2px solid transparent;
@@ -150,14 +175,19 @@ ul { list-style: none; }
   border-left-color: var(--color-primary);
 }
 
-/* 分类图标 */
+/* 分类图标 - 单色 */
 .sidebar-item-icon {
   width: 20px;
   height: 20px;
   border-radius: 4px;
   object-fit: contain;
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.65;
+  filter: brightness(0);
+}
+[data-theme="dark"] .sidebar-item-icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
 }
 
 .sidebar-item-letter {
@@ -235,16 +265,18 @@ ul { list-style: none; }
    Search Section
    ============================================================ */
 .search-section {
-  padding: 32px 48px 24px;
+  padding: 32px 48px 20px;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 10;
 }
 
 .search-bar {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 580px;
+  max-width: 640px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -345,6 +377,77 @@ ul { list-style: none; }
   flex: 1;
   padding: 0 48px 48px;
   min-width: 0;
+}
+
+/* ============================================================
+   Page Mode（分页滑动）
+   ============================================================ */
+/* 给 body 固定高度，使 content-area 能获得正确的受约束高度 */
+body.page-mode-active {
+  height: 100dvh;
+  overflow: hidden;
+}
+body.page-mode-active .site-footer {
+  display: none;
+}
+
+.content-area.page-mode {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-track-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+.page-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.page-slide {
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 48px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.page-slide::-webkit-scrollbar { width: 4px; }
+.page-slide::-webkit-scrollbar-track { background: transparent; }
+.page-slide::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+
+/* Dots 指示器 */
+.page-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0 14px;
+  flex-shrink: 0;
+}
+.page-dot {
+  height: 6px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: width 0.28s var(--ease), background 0.28s var(--ease);
+}
+.page-dot:hover { background: var(--color-text-secondary); }
+.page-dot.active {
+  width: 20px;
+  background: var(--color-primary);
 }
 
 /* ============================================================
@@ -537,6 +640,14 @@ ul { list-style: none; }
 [data-theme="light"] .icon-sun  { display: none; }
 [data-theme="dark"]  .icon-moon { display: none; }
 
+/* 链接打开方式切换 */
+[data-linktarget="blank"] .icon-tab-self { display: none; }
+[data-linktarget="self"]  .icon-tab-new  { display: none; }
+[data-linktarget="self"]  #linkTargetBtn {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
 #backTop { opacity: 0; pointer-events: none; transition: opacity var(--dur) var(--ease); }
 #backTop.visible { opacity: 1; pointer-events: auto; }
 
@@ -580,10 +691,12 @@ ul { list-style: none; }
   }
   .sidebar.open { transform: translateX(0); }
   .sidebar-overlay.open { display: block; }
+  .sidebar-collapse-btn { display: none; }
   .page-main { width: 100%; }
   .mobile-topbar { display: flex; }
   .search-section { padding: 16px 16px 12px; }
   .content-area { padding: 0 16px 32px; }
+  .page-slide { padding: 0 16px 24px; }
   .floating-tools { right: 10px; }
   .site-footer { padding: 16px; }
 }

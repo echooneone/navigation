@@ -21,4 +21,20 @@ function authMiddleware(req, res, next) {
   }
 }
 
-module.exports = { authMiddleware, JWT_SECRET };
+// 可选认证：有 token 则验证，无 token/验证失败则继续（req.admin 为 null）
+function optionalAuthMiddleware(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    req.admin = null;
+    return next();
+  }
+  const token = authHeader.slice(7);
+  try {
+    req.admin = jwt.verify(token, JWT_SECRET);
+  } catch {
+    req.admin = null;
+  }
+  next();
+}
+
+module.exports = { authMiddleware, optionalAuthMiddleware, JWT_SECRET };

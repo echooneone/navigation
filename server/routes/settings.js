@@ -16,7 +16,7 @@ router.get('/', (req, res) => {
 // PUT /api/settings — 需认证，后台更新配置
 router.put('/', authMiddleware, (req, res) => {
   const db = getDB();
-  const allowed = ['footer_text'];
+  const allowed = ['footer_text', 'scroll_mode'];
   const upsert = db.prepare(
     'INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
   );

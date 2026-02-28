@@ -1,4 +1,4 @@
-# 🧭 个人导航页
+# 个人导航页
 
 高性能、风格统一的个人导航页，含前台展示与后台管理，仅管理员可编辑。
 
@@ -11,50 +11,64 @@
 - **前台**：分组卡片展示、实时全文搜索、暗色模式、移动端响应式
 - **后台**：链接 / 分类的增删改查、favicon 自动抓取、图标上传、数据备份导入导出
 - **安全**：JWT 认证、bcrypt 密码、API 限流、Helmet 安全头
+- **登录**：仅密码登录（单管理员，无需用户名）
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
-| 前台展示 | 纯 HTML + CSS + Vanilla JS（无框架，< 50KB）|
+| 前台展示 | 纯 HTML + CSS + Vanilla JS（无框架，< 50 KB）|
 | 管理后台 | Vue 3 + Vite + Pinia + Vue Router |
 | 后端 API | Node.js + Express |
 | 数据库   | SQLite（better-sqlite3）|
 | 认证     | JWT + bcrypt |
-| 部署     | 宝塔面板 Nginx + PM2 |
+| 配置     | dotenv（`.env` 文件）|
 
 ## 项目结构
 
 ```
 navigation/
-├── frontend/        # 前台展示页（纯静态）
-├── admin/           # 后台管理（Vue 3 SPA）
-├── server/          # 后端 API（Express）
-├── deploy/          # 部署配置（Nginx + setup.sh）
+├── frontend/          # 前台展示页（纯静态）
+├── admin/             # 后台管理（Vue 3 SPA）
+│   └── src/
+├── server/            # 后端 API（Express）
+│   ├── index.js       # 入口，同时托管前台和后台静态文件
+│   ├── .env.example   # 环境变量模板
+│   ├── db/
+│   ├── middleware/
+│   ├── routes/
+│   └── uploads/
+├── build-deploy.bat   # Windows 一键构建 + 打包脚本
 └── README.md
 ```
 
-## 快速开始
+---
 
-### 本地开发
+## 本地开发
 
 ```bash
-# 1. 安装所有依赖
+# 安装依赖
 cd server && npm install
 cd ../admin && npm install
 
-# 2. 构建管理后台 SPA（首次和后台代码变更后执行）
-npm run build    # 在 admin/ 目录
-
-# 3. 启动服务（回到根目录）
-cd ..
+# 启动后端（根目录）
 npm start
 # 前台：http://localhost:3721/
 # 后台：http://localhost:3721/admin/
 # API： http://localhost:3721/api/health
 ```
 
-> **管理后台开发模式**：可以单独运行 `cd admin && npm run dev`，Vite 开发服务器启动在 `:5173` 并自动代理 `/api` 到 `:3721`。
+> 管理后台独立开发：`cd admin && npm run dev`，Vite 起在 `:5173` 并自动代理 `/api` 到 `:3721`。
+
+---
+
+## 打包部署（一键）
+
+双击 `build-deploy.bat`：
+
+1. 自动执行 `admin npm run build` 构建 Vue 3 后台
+2. 将 `server/`、`admin/dist/`、`frontend/` 打入 zip
+3. 输出 `navigation-deploy-YYYYMMDD_HHMM.zip`
 
 ---
 
@@ -62,49 +76,44 @@ npm start
 
 ### 前置条件
 
-- 宝塔面板已安装 Node.js **18+**
-- 安装 PM2（宝塔软件商店 → Node.js 管理器 → PM2）
+- 宝塔面板已安装 **Node.js 18+**
 
 ### 部署步骤
 
-```bash
-# 1. 上传项目到服务器
-scp -r ./navigation user@server:/www/wwwroot/
+1. 上传 zip 到服务器，解压到 `/www/wwwroot/navigation/`
 
-# 2. 运行一键部署脚本
-cd /www/wwwroot/navigation
-chmod +x deploy/setup.sh
-./deploy/setup.sh
+2. 宝塔「文件管理器」进入 `/www/wwwroot/navigation/server/`，  
+   将 `.env.example` 复制为 `.env`，按需修改：
 
-# 3. 在宝塔面板创建站点 nav.yourdomain.com
-# 4. 将 deploy/nginx.conf 内容粘贴到站点 Nginx 配置
-# 5. 申请 SSL 证书（Let's Encrypt）并重载 Nginx
-```
+   ```dotenv
+   # 必改：防止 Token 伪造
+   JWT_SECRET=换成随机长字符串
 
-### Nginx 配置要点
+   # 初始登录密码（首次启动前改好，之后进后台修改）
+   ADMIN_DEFAULT_PASSWORD=your-password
 
-仅需一条 `proxy_pass`，Express 负责所有路由：
+   # 服务端口
+   PORT=3721
+   ```
 
-```nginx
-location / {
-    proxy_pass http://127.0.0.1:3721;
-    # ... 其他标准行
-}
-```
+   > `.env` 中的密码仅在 `db/navigation.db` **不存在时**（首次启动）生效。  
+   > 若数据库已存在，请登录后台手动修改密码，或删除 `db/navigation.db` 重新初始化。
 
-### 修改默认密码
+3. 宝塔终端执行：
 
-编辑 `server/ecosystem.config.js`：
+   ```bash
+   cd /www/wwwroot/navigation/server
+   npm install --production
+   ```
 
-```js
-env: {
-  JWT_SECRET: 'your-very-long-random-secret',  // 必改！
-  ADMIN_DEFAULT_PASSWORD: 'your-password',      // 首次启动时导入
-  CORS_ORIGIN: 'https://nav.yourdomain.com'
-}
-```
+4. 宝塔 → **Node.js 项目管理器** → 添加项目：
 
-修改后重启：`pm2 restart nav`
+   | 字段 | 值 |
+   |------|----|
+   | 项目目录 | `/www/wwwroot/navigation/server` |
+   | 启动文件 | `index.js` |
+   | 端口 | `3721` |
+   | 域名 | 填写你的域名（宝塔自动创建反向代理） |
 
 ---
 
@@ -112,7 +121,7 @@ env: {
 
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
-| POST | /api/auth/login | 登录 | 否 |
+| POST | /api/auth/login | 登录（仅需密码）| 否 |
 | POST | /api/auth/change-password | 修改密码 | ✓ |
 | GET  | /api/links | 获取全部链接 | 否 |
 | POST | /api/links | 新增链接 | ✓ |
@@ -130,4 +139,4 @@ env: {
 
 ---
 
-*v1.0 · 2026-02-27*
+*v1.1 · 2026-02-28*

@@ -26,7 +26,10 @@
             <svg v-else viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </span>
           <div class="cat-info">
-            <div class="cat-card-name">{{ cat.name }}</div>
+            <div class="cat-card-name">
+              {{ cat.name }}
+              <span v-if="cat.is_private" class="badge-private">🔒 私有</span>
+            </div>
             <div class="text-secondary text-sm">{{ cat.link_count || 0 }} 条链接</div>
           </div>
 
@@ -114,8 +117,12 @@ async function doDelete() {
   width: 40px; height: 40px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.cat-icon-img { width: 22px; height: 22px; object-fit: contain; }
+.cat-icon-img { width: 22px; height: 22px; object-fit: contain; filter: brightness(0) opacity(0.65); }
 .cat-info { flex: 1; min-width: 0; }
-.cat-card-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-card-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
 .cat-card-actions { display: flex; gap: 8px; }
+.badge-private {
+  font-size: 0.68rem; font-weight: 500; color: #9B6EF7;
+  background: rgba(124, 58, 237, 0.12); border-radius: 4px; padding: 1px 6px; white-space: nowrap;
+}
 </style>

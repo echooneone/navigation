@@ -1,3 +1,6 @@
+// 加载 .env 文件（生产环境在项目目录创建此文件配置敏感变量）
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

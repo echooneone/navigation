@@ -62,6 +62,7 @@
             </td>
             <td>
               <a :href="link.url" target="_blank" rel="noopener" class="link-title-cell">{{ link.title }}</a>
+              <span v-if="link.is_private" class="badge-private">🔒 私有</span>
               <p v-if="link.description" class="text-secondary text-sm" style="margin-top:2px">{{ link.description }}</p>
             </td>
             <td class="url-cell">
@@ -194,4 +195,9 @@ async function doDelete() {
 .link-title-cell:hover { color: var(--color-primary); }
 .url-cell { max-width: 200px; overflow: hidden; }
 .url-cell a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.badge-private {
+  display: inline-block;
+  font-size: 0.68rem; font-weight: 500; color: #9B6EF7;
+  background: rgba(124, 58, 237, 0.12); border-radius: 4px; padding: 1px 6px; margin-left: 4px;
+}
 </style>

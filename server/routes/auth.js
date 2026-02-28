@@ -6,22 +6,22 @@ const { authMiddleware, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
 
-// POST /api/auth/login — 登录
+// POST /api/auth/login — 登录（仅密码）
 router.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: '用户名和密码不能为空' });
+  const { password } = req.body;
+  if (!password) {
+    return res.status(400).json({ success: false, message: '密码不能为空' });
   }
 
   const db = getDB();
-  const admin = db.prepare('SELECT * FROM admin WHERE username = ?').get(username);
+  const admin = db.prepare('SELECT * FROM admin LIMIT 1').get();
   if (!admin) {
-    return res.status(401).json({ success: false, message: '用户名或密码错误' });
+    return res.status(401).json({ success: false, message: '管理员账户不存在' });
   }
 
   const valid = bcrypt.compareSync(password, admin.password);
   if (!valid) {
-    return res.status(401).json({ success: false, message: '用户名或密码错误' });
+    return res.status(401).json({ success: false, message: '密码错误' });
   }
 
   const token = jwt.sign(

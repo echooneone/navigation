@@ -27,6 +27,7 @@ function initDatabase() {
       icon        TEXT DEFAULT '',
       color       TEXT DEFAULT '#4F6EF7',
       sort_order  INTEGER DEFAULT 0,
+      is_private  INTEGER DEFAULT 0,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
@@ -42,11 +43,22 @@ function initDatabase() {
       category_id INTEGER,
       tags        TEXT DEFAULT '[]',
       sort_order  INTEGER DEFAULT 0,
+      is_private  INTEGER DEFAULT 0,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     )
   `);
+
+  // 迁移：为旧数据库补充 is_private 列
+  const catCols  = database.prepare('PRAGMA table_info(categories)').all();
+  const linkCols = database.prepare('PRAGMA table_info(links)').all();
+  if (!catCols.some(c => c.name === 'is_private')) {
+    database.prepare('ALTER TABLE categories ADD COLUMN is_private INTEGER DEFAULT 0').run();
+  }
+  if (!linkCols.some(c => c.name === 'is_private')) {
+    database.prepare('ALTER TABLE links ADD COLUMN is_private INTEGER DEFAULT 0').run();
+  }
 
   // 管理员表
   database.exec(`
@@ -68,6 +80,10 @@ function initDatabase() {
   // 默认页脚
   database.prepare(
     `INSERT OR IGNORE INTO site_settings (key, value) VALUES ('footer_text', 'Copyright © 2026 · 个人导航')`
+  ).run();
+  // 默认滚动模式
+  database.prepare(
+    `INSERT OR IGNORE INTO site_settings (key, value) VALUES ('scroll_mode', 'scroll')`
   ).run();
 
   // 检查是否已有管理员

@@ -18,8 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(usr, pwd) {
-    const res = await api.post('/auth/login', { username: usr, password: pwd })
+  async function login(pwd) {
+    const res = await api.post('/auth/login', { password: pwd })
     token.value = res.data.data.token
     username.value = res.data.data.username
     localStorage.setItem('nav-admin-token', token.value)

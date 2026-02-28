@@ -53,6 +53,13 @@
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             {{ auth.username }}
           </span>
+          <!-- 主题切换 -->
+          <button class="btn btn-secondary theme-toggle-btn" @click="toggleTheme" :title="isDark ? '切换到亮色' : '切换到深色'">
+            <!-- 月亮（当前亮色，点击切暗） -->
+            <svg v-if="!isDark" viewBox="0 0 24 24" fill="none" width="15" height="15"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <!-- 太阳（当前深色，点击切亮） -->
+            <svg v-else viewBox="0 0 24 24" fill="none" width="15" height="15"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
           <a class="btn btn-secondary" href="/">
             <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="15 3 21 3 21 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="10" y1="14" x2="21" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             查看前台
@@ -67,7 +74,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 
@@ -78,6 +85,33 @@ const sidebarCollapsed = ref(false)
 
 const titleMap = { Dashboard: '仪表盘', Links: '链接管理', Categories: '分类管理', Settings: '设置' }
 const pageTitle = computed(() => titleMap[route.name] || '管理后台')
+
+// ── 主题 ─────────────────────────────────────────────────────
+const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark')
+
+function toggleTheme() {
+  const next = isDark.value ? 'light' : 'dark'
+  document.documentElement.setAttribute('data-theme', next)
+  localStorage.setItem('nav-theme', next)
+  isDark.value = next === 'dark'
+}
+
+// 监听系统主题变化（用户没手动设置时跟随系统）
+let mediaQuery
+function onSystemThemeChange(e) {
+  if (!localStorage.getItem('nav-theme')) {
+    const theme = e.matches ? 'dark' : 'light'
+    document.documentElement.setAttribute('data-theme', theme)
+    isDark.value = e.matches
+  }
+}
+onMounted(() => {
+  mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  mediaQuery.addEventListener('change', onSystemThemeChange)
+})
+onUnmounted(() => {
+  mediaQuery?.removeEventListener('change', onSystemThemeChange)
+})
 
 function handleLogout() {
   auth.logout()
@@ -165,7 +199,7 @@ function handleLogout() {
 
 .sidebar-footer { padding: 8px; border-top: 1px solid var(--color-border); }
 .logout-btn { color: var(--color-text-secondary); width: 100%; }
-.logout-btn:hover { color: var(--color-danger); background: #FEF2F2; }
+.logout-btn:hover { color: var(--color-danger); background: rgba(239, 68, 68, 0.1); }
 
 /* 主区域 */
 .main-wrapper {
@@ -195,6 +229,7 @@ function handleLogout() {
   font-size: 0.83rem;
   color: var(--color-text-secondary);
 }
+.theme-toggle-btn { padding: 6px 9px; }
 
 .admin-main {
   flex: 1;
