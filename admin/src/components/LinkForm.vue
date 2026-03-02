@@ -253,14 +253,46 @@ function isEmoji(str) {
   return str && /\p{Emoji}/u.test(str) && str.length <= 4
 }
 
+/** 将 Google favicon URL 在客户端下载并转为 base64 dataUrl */
+async function fetchFaviconAsDataUrl(imageUrl) {
+  const resp = await fetch(imageUrl, { mode: 'cors' })
+  if (!resp.ok) throw new Error('fetch failed')
+  const blob = await resp.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
 async function autoFetchFavicon() {
   if (!form.url || form.icon) return
   fetchingFavicon.value = true
   try {
-    const res = await api.get(`/favicon?url=${encodeURIComponent(form.url)}`)
-    if (res.data.success) {
-      form.icon = res.data.data.faviconUrl
+    // ① 先让服务端尝试抓取并缓存（服务端有谷歌访问时直接命中）
+    const cacheRes = await api.get(`/favicon/cache?url=${encodeURIComponent(form.url)}`)
+    if (cacheRes.data.success && cacheRes.data.data?.iconUrl) {
+      form.icon = cacheRes.data.data.iconUrl
+      return
     }
+
+    // ② 服务端无法访问 Google → 由客户端下载图标再上传到服务器
+    const { hostname } = new URL(form.url)
+    const googleUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`
+    try {
+      const dataUrl = await fetchFaviconAsDataUrl(googleUrl)
+      const uploadRes = await api.post('/favicon/cache-from-client', { domain: hostname, dataUrl })
+      if (uploadRes.data.success && uploadRes.data.data?.iconUrl) {
+        form.icon = uploadRes.data.data.iconUrl
+        return
+      }
+    } catch {
+      // 客户端下载或上传失败，回退到直接使用 Google URL
+    }
+
+    // ③ 兜底：直接使用 Google URL（仅对有谷歌访问的客户端可见）
+    form.icon = googleUrl
   } catch {
     // 静默失败
   } finally {

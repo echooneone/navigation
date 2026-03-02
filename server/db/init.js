@@ -93,7 +93,7 @@ function initDatabase() {
     const rawPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
     const hashedPassword = bcrypt.hashSync(rawPassword, 12);
     database.prepare('INSERT INTO admin (username, password) VALUES (?, ?)').run(username, hashedPassword);
-    console.log(`✅ 默认管理员已创建：用户名 [${username}]，请登录后立即修改密码`);
+    console.log(`默认管理员已创建：用户名 [${username}]，请登录后立即修改密码`);
   }
 
   // 插入示例数据（仅首次）
@@ -102,7 +102,7 @@ function initDatabase() {
     insertSampleData(database);
   }
 
-  console.log('✅ 数据库初始化完成');
+  console.log('数据库初始化完成');
   return database;
 }
 
@@ -146,7 +146,7 @@ function insertSampleData(database) {
   insertLink.run('DevDocs',   'https://devdocs.io',    '聚合开发文档',     fav('devdocs.io'),    catDocs, 2);
   insertLink.run('Can I Use', 'https://caniuse.com',   '浏览器兼容性查询', fav('caniuse.com'),   catDocs, 3);
 
-  console.log('✅ 示例数据已插入');
+  console.log('示例数据已插入');
 }
 
 module.exports = { initDatabase, getDB };

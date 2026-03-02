@@ -9,7 +9,7 @@
 ## 功能特性
 
 - **前台**：分组卡片展示、实时全文搜索、暗色模式、移动端响应式
-- **后台**：链接 / 分类的增删改查、favicon 自动抓取、图标上传、数据备份导入导出
+- **后台**：链接 / 分类的增删改查、favicon 自动抓取并缓存到服务器、图标上传、数据备份导入导出
 - **安全**：JWT 认证、bcrypt 密码、API 限流、Helmet 安全头
 - **登录**：仅密码登录（单管理员，无需用户名）
 
@@ -134,6 +134,7 @@ npm start
 | DELETE | /api/categories/:id | 删除分类 | ✓ |
 | POST | /api/upload/icon | 上传图标 | ✓ |
 | GET  | /api/favicon?url= | 抓取 favicon | ✓ |
+| GET  | /api/favicon/cache?url= | 抓取并缓存 favicon 到服务器 | ✓ |
 | POST | /api/backup/export | 导出数据 | ✓ |
 | POST | /api/backup/import | 导入数据 | ✓ |
 

@@ -96,6 +96,28 @@
           </button>
         </div>
       </div>
+
+      <!-- 图标本地化迁移 -->
+      <div class="card">
+        <h2 class="section-title">图标本地化迁移</h2>
+        <div class="settings-form">
+          <p class="form-hint" style="font-size:0.83rem;line-height:1.6">
+            服务器环境无法访问 Google Favicon 时，可通过此功能将已有链接的 Google 图标<br />
+            在当前浏览器下载并上传至服务器，使所有设备均可正常显示图标。
+          </p>
+          <div v-if="migrateStats" class="migrate-stats">
+            <span>共 <b>{{ migrateStats.total }}</b> 个 Google 图标</span>
+            <span>✓ 已完成 <b>{{ migrateStats.done }}</b></span>
+            <span v-if="migrateStats.failed > 0" style="color:var(--color-danger)">✗ 失败 {{ migrateStats.failed }}</span>
+          </div>
+          <div v-if="migrating" class="migrate-progress">
+            <div class="migrate-bar" :style="{ width: migrateProgress + '%' }"></div>
+          </div>
+          <button class="btn btn-secondary" :disabled="migrating" @click="handleMigrateIcons">
+            {{ migrating ? `迁移中 (${migrateStats?.done ?? 0}/${migrateStats?.total ?? '...'})` : '一键迁移 Google 图标到本地' }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -177,6 +199,96 @@ async function handleSaveSite() {
   } catch {}
   finally { siteLoading.value = false }
 }
+
+// 图标本地化迁移
+const migrating = ref(false)
+const migrateProgress = ref(0)
+const migrateStats = ref(null)
+
+/** 将 Google favicon URL 在客户端下载并转为 base64 dataUrl */
+async function fetchFaviconAsDataUrl(imageUrl) {
+  const resp = await fetch(imageUrl, { mode: 'cors' })
+  if (!resp.ok) throw new Error('fetch failed')
+  const blob = await resp.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function handleMigrateIcons() {
+  migrating.value = true
+  migrateProgress.value = 0
+  migrateStats.value = null
+
+  try {
+    // 获取所有链接
+    const linksRes = await api.get('/links')
+    const links = linksRes.data?.data || []
+
+    // 只处理 Google favicon 格式的图标
+    const googleLinks = links.filter(
+      (l) => l.icon && l.icon.includes('google.com/s2/favicons')
+    )
+
+    const total = googleLinks.length
+    let done = 0
+    let failed = 0
+    migrateStats.value = { total, done, failed }
+
+    if (total === 0) {
+      showToast('没有需要迁移的 Google 图标', 'success')
+      migrating.value = false
+      return
+    }
+
+    for (const link of googleLinks) {
+      try {
+        // 从图标 URL 中提取域名
+        const iconUrlObj = new URL(link.icon)
+        const domain = iconUrlObj.searchParams.get('domain') || new URL(link.url).hostname
+
+        // ① 先检查服务端是否已有缓存
+        const checkRes = await api.get(`/favicon/cache?url=${encodeURIComponent(link.url)}`)
+        if (checkRes.data.success && checkRes.data.data?.iconUrl) {
+          // 已缓存，直接更新链接图标
+          await api.put(`/links/${link.id}`, { icon: checkRes.data.data.iconUrl })
+        } else {
+          // ② 客户端下载后上传
+          const dataUrl = await fetchFaviconAsDataUrl(link.icon)
+          const uploadRes = await api.post('/favicon/cache-from-client', { domain, dataUrl })
+          if (uploadRes.data.success && uploadRes.data.data?.iconUrl) {
+            await api.put(`/links/${link.id}`, { icon: uploadRes.data.data.iconUrl })
+          } else {
+            throw new Error('upload failed')
+          }
+        }
+        done++
+      } catch {
+        failed++
+      }
+
+      migrateStats.value = { total, done, failed }
+      migrateProgress.value = Math.round(((done + failed) / total) * 100)
+    }
+
+    if (failed === 0) {
+      showToast(`✓ 全部 ${total} 个图标已迁移到本地`, 'success')
+    } else {
+      showToast(`完成：${done} 成功，${failed} 失败`, 'warning')
+    }
+
+    // 刷新数据 store（让 Links 页面即时看到新图标路径）
+    await data.fetchAll()
+  } catch (e) {
+    showToast('迁移过程出错：' + (e.message || '未知错误'), 'error')
+  } finally {
+    migrating.value = false
+    migrateProgress.value = 100
+  }
+}
 </script>
 
 <style scoped>
@@ -195,6 +307,19 @@ async function handleSaveSite() {
 .backup-item-title { font-weight: 500; font-size: 0.875rem; }
 
 .form-hint { font-size: 0.786rem; color: var(--color-text-secondary); margin-top: 4px; }
+
+.migrate-stats { display: flex; gap: 16px; font-size: 0.83rem; padding: 8px 0; }
+.migrate-progress {
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.migrate-bar {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
 
 /* 模式选项 */
 .mode-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }

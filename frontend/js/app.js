@@ -109,13 +109,20 @@ function toggleSidebar() {
   const expandedW  = parseInt(rootStyle.getPropertyValue('--sidebar-w'))           || 200;
   const collapsedW = parseInt(rootStyle.getPropertyValue('--sidebar-collapsed-w')) || 52;
   const fadeEls    = _sidebarFadeEls();
+  const animeLib   = window.anime;
+
+  if (typeof animeLib !== 'function') {
+    sidebar.classList.toggle('collapsed', willCollapse);
+    _updateSearchBarCenter(willCollapse ? collapsedW : expandedW);
+    return;
+  }
 
   _sidebarAnimating = true;
 
   if (willCollapse) {
     // 文字淡出 + 宽度收缩同步进行，搜索栏跟踪偏移
-    anime({ targets: fadeEls, opacity: 0, duration: 160, easing: 'easeInQuad' });
-    anime({
+    animeLib({ targets: fadeEls, opacity: 0, duration: 160, easing: 'easeInQuad' });
+    animeLib({
       targets: sidebar,
       width: [expandedW, collapsedW],
       duration: 280,
@@ -137,7 +144,7 @@ function toggleSidebar() {
     sidebar.classList.remove('collapsed');
     fadeEls.forEach(el => (el.style.opacity = '0'));
 
-    anime({
+    animeLib({
       targets: sidebar,
       width: [collapsedW, expandedW],
       duration: 300,
@@ -148,7 +155,7 @@ function toggleSidebar() {
       complete() {
         sidebar.style.width = '';
         _updateSearchBarCenter(expandedW);
-        anime({
+        animeLib({
           targets: fadeEls,
           opacity: 1,
           duration: 180,
@@ -551,10 +558,13 @@ async function loadData() {
   const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
 
   try {
-    const [linksRes, catsRes, settingsRes] = await Promise.all([
+    const settingsPromise = fetch(`${API_BASE}/settings`)
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+
+    const [linksRes, catsRes] = await Promise.all([
       fetch(`${API_BASE}/links`, { headers: authHeaders }),
-      fetch(`${API_BASE}/categories`, { headers: authHeaders }),
-      fetch(`${API_BASE}/settings`)
+      fetch(`${API_BASE}/categories`, { headers: authHeaders })
     ]);
     if (!linksRes.ok || !catsRes.ok) throw new Error('API 响应异常');
 
@@ -564,21 +574,18 @@ async function loadData() {
     allLinks      = linksData.data  || [];
     allCategories = catsData.data   || [];
 
-    // 更新页脚 & 读取滚动模式
-    if (settingsRes.ok) {
-      const settingsData = await settingsRes.json();
-      const footerEl = document.getElementById('footerText');
-      if (footerEl && settingsData.data?.footer_text) {
-        footerEl.textContent = settingsData.data.footer_text;
-      }
-      scrollMode = settingsData.data?.scroll_mode || 'scroll';
+    renderSidebar();
+    renderGroups();
+
+    const settingsData = await settingsPromise;
+    const footerEl = document.getElementById('footerText');
+    if (footerEl && settingsData?.data?.footer_text) {
+      footerEl.textContent = settingsData.data.footer_text;
     }
+    scrollMode = settingsData?.data?.scroll_mode || 'scroll';
 
     loadingState.classList.add('hidden');
     groupContainer.classList.remove('hidden');
-
-    renderSidebar();
-    renderGroups();
 
     if (scrollMode === 'page') {
       initPageMode();
@@ -845,6 +852,61 @@ function bindPageEvents(wrap) {
   };
   wrap.addEventListener('pointerup', endDrag);
   wrap.addEventListener('pointercancel', endDrag);
+
+  // iPad / iOS Safari 触摸兜底：横向滑动翻页，纵向保持内容滚动
+  let touchActive = false;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchLastX = 0;
+  let touchAxis = '';
+
+  wrap.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1 || totalPages <= 1) return;
+    const t = e.touches[0];
+    touchActive = true;
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchLastX  = t.clientX;
+    touchAxis   = '';
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', (e) => {
+    if (!touchActive || e.touches.length !== 1 || totalPages <= 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    if (!touchAxis) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      touchAxis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    }
+
+    if (touchAxis === 'x') {
+      e.preventDefault();
+      touchLastX = t.clientX;
+      pageTrackEl.style.transition = 'none';
+      pageTrackEl.style.transform = `translateX(${-(currentPage + 1) * pageSlideWidth + dx}px)`;
+    }
+  }, { passive: false });
+
+  const endTouchDrag = () => {
+    if (!touchActive || totalPages <= 1) return;
+    touchActive = false;
+
+    if (touchAxis !== 'x') return;
+
+    pageTrackEl.style.transition = '';
+    const delta = touchLastX - touchStartX;
+    if      (delta < -PAGE_THRESHOLD) goToPage(currentPage + 1 > totalPages - 1 ? totalPages : currentPage + 1);
+    else if (delta >  PAGE_THRESHOLD) goToPage(currentPage - 1 < 0             ? -1         : currentPage - 1);
+    else {
+      actualTrackPos = currentPage + 1;
+      pageTrackEl.style.transform = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+    }
+  };
+
+  wrap.addEventListener('touchend', endTouchDrag, { passive: true });
+  wrap.addEventListener('touchcancel', endTouchDrag, { passive: true });
 }
 
 // ─── 事件绑定 ───────────────────────────────────────────────
