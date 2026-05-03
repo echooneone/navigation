@@ -103,26 +103,89 @@ async function doDelete() {
 </script>
 
 <style scoped>
-.toolbar { display: flex; align-items: center; margin-bottom: 16px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.toolbar .text-secondary {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
 
 .cats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
 }
 
-.cat-card { display: flex; flex-direction: column; gap: 12px; }
-.cat-card-top { display: flex; align-items: center; gap: 10px; }
-.cat-icon-wrap {
-  width: 40px; height: 40px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.cat-icon-img { width: 22px; height: 22px; object-fit: contain; filter: brightness(0) opacity(0.65); }
+.cat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 2px;
+  background: var(--color-accent);
+  transition: width var(--dur) var(--ease);
+}
+.cat-card:hover { border-color: var(--color-text); transform: translateY(-2px); }
+.cat-card:hover::after { width: 60%; }
+
+.cat-card-top { display: flex; align-items: center; gap: 12px; }
+.cat-icon-wrap {
+  width: 42px; height: 42px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1px solid var(--color-hairline);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text);
+}
+.cat-icon-img { width: 22px; height: 22px; object-fit: contain; }
 .cat-info { flex: 1; min-width: 0; }
-.cat-card-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.cat-card-name {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: -.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.cat-info .text-secondary {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
 .cat-card-actions { display: flex; gap: 8px; }
+.cat-card-actions .btn:first-child { flex: 1; }
 .badge-private {
-  font-size: 0.68rem; font-weight: 500; color: #9B6EF7;
-  background: rgba(124, 58, 237, 0.12); border-radius: 4px; padding: 1px 6px; white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: .6rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-xs);
+  padding: 2px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 </style>

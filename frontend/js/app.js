@@ -24,7 +24,7 @@ const backTop          = document.getElementById('backTop');
 const sidebar          = document.getElementById('sidebar');
 const sidebarOverlay   = document.getElementById('sidebarOverlay');
 const hamburger        = document.getElementById('hamburger');
-const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn');
+const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn'); // 可能为 null，已移除按钮
 const linkTargetBtn    = document.getElementById('linkTargetBtn');
 const engineCurrent    = document.getElementById('engineCurrent');
 const engineLabel      = document.getElementById('engineLabel');
@@ -74,101 +74,9 @@ function toggleLinkTarget() {
   });
 }
 
-// ─── 侧边栏折叠 ─────────────────────────────────────────────
-function _updateSearchBarCenter(sidebarWidth) {
-  if (!searchBarEl) return;
-  const w = sidebarWidth ?? parseFloat(getComputedStyle(sidebar).width);
-  searchBarEl.style.transform = `translateX(${-w / 2}px)`;
-}
-
-function initSidebar() {
-  if (localStorage.getItem('nav-sidebar-collapsed') === '1') {
-    sidebar.classList.add('collapsed');
-    sidebarCollapseBtn.title = '展开侧边栏';
-    sidebarCollapseBtn.setAttribute('aria-label', '展开侧边栏');
-  }
-  _updateSearchBarCenter();
-}
-
-// 收集需要淡入/淡出的文字元素
-function _sidebarFadeEls() {
-  return [...sidebarNav.querySelectorAll('.sidebar-item-name')].filter(Boolean);
-}
-
-let _sidebarAnimating = false;
-function toggleSidebar() {
-  if (_sidebarAnimating) return;
-  const isCollapsed = sidebar.classList.contains('collapsed');
-  const willCollapse = !isCollapsed;
-
-  localStorage.setItem('nav-sidebar-collapsed', willCollapse ? '1' : '0');
-  sidebarCollapseBtn.title = willCollapse ? '展开侧边栏' : '收起侧边栏';
-  sidebarCollapseBtn.setAttribute('aria-label', willCollapse ? '展开侧边栏' : '收起侧边栏');
-
-  const rootStyle  = getComputedStyle(document.documentElement);
-  const expandedW  = parseInt(rootStyle.getPropertyValue('--sidebar-w'))           || 200;
-  const collapsedW = parseInt(rootStyle.getPropertyValue('--sidebar-collapsed-w')) || 52;
-  const fadeEls    = _sidebarFadeEls();
-  const animeLib   = window.anime;
-
-  if (typeof animeLib !== 'function') {
-    sidebar.classList.toggle('collapsed', willCollapse);
-    _updateSearchBarCenter(willCollapse ? collapsedW : expandedW);
-    return;
-  }
-
-  _sidebarAnimating = true;
-
-  if (willCollapse) {
-    // 文字淡出 + 宽度收缩同步进行，搜索栏跟踪偏移
-    animeLib({ targets: fadeEls, opacity: 0, duration: 160, easing: 'easeInQuad' });
-    animeLib({
-      targets: sidebar,
-      width: [expandedW, collapsedW],
-      duration: 280,
-      easing: 'cubicBezier(0.4,0,0.2,1)',
-      update() {
-        _updateSearchBarCenter(parseFloat(sidebar.style.width));
-      },
-      complete() {
-        sidebar.classList.add('collapsed');
-        sidebar.style.width = '';
-        fadeEls.forEach(el => (el.style.opacity = ''));
-        _updateSearchBarCenter(collapsedW);
-        _sidebarAnimating = false;
-      },
-    });
-  } else {
-    // 锁定当前宽度 → 移除 collapsed → 展宽 → 文字淡入
-    sidebar.style.width = collapsedW + 'px';
-    sidebar.classList.remove('collapsed');
-    fadeEls.forEach(el => (el.style.opacity = '0'));
-
-    animeLib({
-      targets: sidebar,
-      width: [collapsedW, expandedW],
-      duration: 300,
-      easing: 'cubicBezier(0.4,0,0.2,1)',
-      update() {
-        _updateSearchBarCenter(parseFloat(sidebar.style.width));
-      },
-      complete() {
-        sidebar.style.width = '';
-        _updateSearchBarCenter(expandedW);
-        animeLib({
-          targets: fadeEls,
-          opacity: 1,
-          duration: 180,
-          easing: 'easeOutQuad',
-          complete() {
-            fadeEls.forEach(el => (el.style.opacity = ''));
-            _sidebarAnimating = false;
-          },
-        });
-      },
-    });
-  }
-}
+// ─── 侧边栏（仅移动端抽屉，桌面端固定展开）───────────────────
+function initSidebar() { /* 默认展开，无折叠需求 */ }
+function toggleSidebar() { /* deprecated */ }
 
 // ─── 主题 ───────────────────────────────────────────────────
 function initTheme() {
@@ -178,11 +86,33 @@ function initTheme() {
   const theme = saved ?? (prefersDark ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
 }
-function toggleTheme() {
+function toggleTheme(e) {
   const cur = document.documentElement.getAttribute('data-theme');
   const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('nav-theme', next);
+
+  const apply = () => {
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('nav-theme', next);
+  };
+
+  // 从点击点圆形扩散；不支持 View Transitions API 或用户偏好减弱动效则直接切换
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!document.startViewTransition || reduce) { apply(); return; }
+
+  const x = e?.clientX ?? window.innerWidth - 40;
+  const y = e?.clientY ?? window.innerHeight - 40;
+  const r = Math.hypot(
+    Math.max(x, window.innerWidth - x),
+    Math.max(y, window.innerHeight - y)
+  );
+
+  const transition = document.startViewTransition(apply);
+  transition.ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0 at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+      { duration: 480, easing: 'cubic-bezier(.2,.8,.2,1)', pseudoElement: '::view-transition-new(root)' }
+    );
+  });
 }
 
 // ─── 工具 ───────────────────────────────────────────────────
@@ -344,26 +274,6 @@ function createCard(link) {
 function renderSidebar() {
   sidebarNav.innerHTML = '';
 
-  // "全部" 入口
-  const all = document.createElement('a');
-  all.className = 'sidebar-item';
-  all.href = '#';
-  all.dataset.catId = '__all__';
-  all.title = '全部';
-  all.innerHTML = `
-    <span class="sidebar-item-letter" style="background:var(--color-bg);color:var(--color-text-secondary)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    </span>
-    <span class="sidebar-item-name">全部</span>
-  `;
-  all.addEventListener('click', (e) => {
-    e.preventDefault();
-    closeSidebar();
-    if (pageIsActive) { goToPage(0); return; }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-  sidebarNav.appendChild(all);
-
   for (const cat of allCategories) {
     const name = stripEmoji(cat.name) || cat.name;
     const li = document.createElement('a');
@@ -513,7 +423,25 @@ function doSearch(query) {
 }
 
 // ─── 搜索引擎 ───────────────────────────────────────────────
+const LS_ENGINE = 'nav-engine';
+
+function applyEngine(opt, persist = true) {
+  if (!opt) return;
+  engineDropdown.querySelectorAll('.engine-option').forEach(o => o.classList.remove('active'));
+  opt.classList.add('active');
+  engineLabel.textContent = opt.textContent;
+  currentEngineUrl = opt.dataset.url;
+  if (persist) localStorage.setItem(LS_ENGINE, opt.dataset.engine);
+}
+
 function initEngineDropdown() {
+  // 还原本地保存的选择；没有则同步默认 active 项的 url
+  const saved = localStorage.getItem(LS_ENGINE);
+  const restore = saved
+    ? engineDropdown.querySelector(`.engine-option[data-engine="${saved}"]`)
+    : engineDropdown.querySelector('.engine-option.active');
+  applyEngine(restore, false);
+
   engineCurrent.addEventListener('click', (e) => {
     e.stopPropagation();
     engineDropdown.classList.toggle('open');
@@ -524,10 +452,7 @@ function initEngineDropdown() {
   engineDropdown.querySelectorAll('.engine-option').forEach(opt => {
     opt.addEventListener('click', (e) => {
       e.stopPropagation();
-      engineDropdown.querySelectorAll('.engine-option').forEach(o => o.classList.remove('active'));
-      opt.classList.add('active');
-      engineLabel.textContent = opt.textContent;
-      currentEngineUrl = opt.dataset.url;
+      applyEngine(opt, true);
       engineDropdown.classList.remove('open');
     });
   });
@@ -911,7 +836,7 @@ function bindPageEvents(wrap) {
 
 // ─── 事件绑定 ───────────────────────────────────────────────
 themeToggle.addEventListener('click', toggleTheme);
-sidebarCollapseBtn.addEventListener('click', toggleSidebar);
+if (sidebarCollapseBtn) sidebarCollapseBtn.addEventListener('click', toggleSidebar);
 linkTargetBtn.addEventListener('click', toggleLinkTarget);
 searchInput.addEventListener('input', handleSearch);
 hamburger.addEventListener('click', openSidebar);

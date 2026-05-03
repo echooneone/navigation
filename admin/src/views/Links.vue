@@ -167,37 +167,77 @@ async function doDelete() {
 </script>
 
 <style scoped>
-.toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-.search-wrap { flex: 1; min-width: 0; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-hairline);
+  flex-wrap: wrap;
+}
+.search-wrap { flex: 1; min-width: 240px; }
+.search-wrap .form-input {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  letter-spacing: .04em;
+}
+
 .links-table { width: 100%; border-collapse: collapse; }
 .links-table th {
   text-align: left;
-  padding: 10px 14px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  padding: 14px 18px;
+  font-family: var(--font-mono);
+  font-size: .64rem;
+  font-weight: 500;
+  letter-spacing: .18em;
+  text-transform: uppercase;
   color: var(--color-text-secondary);
-  background: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  border-bottom: 1px solid var(--color-hairline);
   white-space: nowrap;
 }
 .links-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--color-hairline);
   vertical-align: middle;
 }
 .links-table tr:last-child td { border-bottom: none; }
-.links-table tr:hover td { background: var(--color-bg); }
+.links-table tbody tr {
+  transition: background var(--dur-micro) var(--ease);
+}
+.links-table tbody tr:hover td { background: var(--color-surface-2); }
 
 .link-title-cell {
+  font-family: var(--font-serif);
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: .96rem;
+  letter-spacing: -.005em;
+  transition: color var(--dur-micro) var(--ease);
 }
-.link-title-cell:hover { color: var(--color-primary); }
-.url-cell { max-width: 200px; overflow: hidden; }
-.url-cell a { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.link-title-cell:hover { color: var(--color-accent); }
+.url-cell { max-width: 240px; overflow: hidden; }
+.url-cell a {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
 .badge-private {
   display: inline-block;
-  font-size: 0.68rem; font-weight: 500; color: #9B6EF7;
-  background: rgba(124, 58, 237, 0.12); border-radius: 4px; padding: 1px 6px; margin-left: 4px;
+  font-family: var(--font-mono);
+  font-size: .58rem;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-xs);
+  padding: 2px 7px;
+  margin-left: 6px;
+  text-transform: uppercase;
 }
 </style>

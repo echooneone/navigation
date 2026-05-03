@@ -295,46 +295,113 @@ async function handleMigrateIcons() {
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
+  gap: 18px;
   align-items: start;
 }
-.section-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; }
-.settings-form { display: flex; flex-direction: column; gap: 12px; }
-.error-tip { font-size: 0.83rem; color: var(--color-danger); }
+.section-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -.01em;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.settings-form { display: flex; flex-direction: column; gap: 14px; }
+.error-tip {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .04em;
+  color: var(--color-danger);
+}
 
 .backup-section { display: flex; flex-direction: column; gap: 14px; }
-.backup-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.backup-item-title { font-weight: 500; font-size: 0.875rem; }
+.backup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-hairline);
+}
+.backup-item:last-child { border-bottom: none; }
+.backup-item-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: .94rem;
+}
 
-.form-hint { font-size: 0.786rem; color: var(--color-text-secondary); margin-top: 4px; }
+.form-hint {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .08em;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
 
-.migrate-stats { display: flex; gap: 16px; font-size: 0.83rem; padding: 8px 0; }
+.migrate-stats {
+  display: flex;
+  gap: 18px;
+  font-family: var(--font-mono);
+  font-size: .76rem;
+  letter-spacing: .04em;
+  padding: 8px 0;
+}
 .migrate-progress {
   height: 4px;
-  background: var(--color-border);
-  border-radius: 2px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-hairline);
+  border-radius: 99px;
   overflow: hidden;
 }
 .migrate-bar {
   height: 100%;
-  background: var(--color-primary);
-  transition: width 0.3s ease;
+  background: var(--color-accent);
+  transition: width .4s var(--ease);
 }
 
 /* 模式选项 */
-.mode-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.mode-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
 .mode-option {
-  display: flex; align-items: center; gap: 12px;
-  padding: 12px 14px;
-  border: 1.5px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: border-color 0.18s, background 0.18s;
+  background: var(--color-surface);
+  transition: border-color var(--dur) var(--ease),
+              background var(--dur) var(--ease),
+              transform var(--dur-micro) var(--ease);
 }
-.mode-option:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
-.mode-option.active { border-color: var(--color-primary); background: var(--color-primary-light); }
-.mode-icon { flex-shrink: 0; color: var(--color-primary); }
-.mode-text { display: flex; flex-direction: column; gap: 2px; }
-.mode-name { font-size: 0.875rem; font-weight: 600; color: var(--color-text); }
-.mode-desc { font-size: 0.78rem; color: var(--color-text-secondary); }
+.mode-option:hover {
+  border-color: var(--color-text);
+  transform: translateX(3px);
+}
+.mode-option.active {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+.mode-icon {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+.mode-option.active .mode-icon { color: var(--color-bg); }
+.mode-text { display: flex; flex-direction: column; gap: 4px; }
+.mode-name {
+  font-family: var(--font-serif);
+  font-size: .96rem;
+  font-weight: 500;
+}
+.mode-desc {
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  letter-spacing: .08em;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+.mode-option.active .mode-desc { color: var(--color-bg); opacity: .7; }
 </style>
