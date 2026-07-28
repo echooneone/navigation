@@ -3,13 +3,13 @@
     <!-- 侧边栏 -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <a class="sidebar-brand" href="/admin/">
-          <span class="brand-mark">N</span>
+        <div class="sidebar-brand">
+          <img class="brand-mark" :src="faviconUrl" alt="logo" />
           <span class="brand-text">
             <span class="brand-name">导航</span>
             <span class="brand-sub">CONSOLE</span>
           </span>
-        </a>
+        </div>
       </div>
 
       <div class="sidebar-section-label">Workspace</div>
@@ -112,6 +112,8 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 
+const faviconUrl = '/favicon.ico' + '?v=' + Date.now()
+
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -187,22 +189,12 @@ function handleLogout() {
 }
 .brand-mark {
   width: 38px; height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 600;
-  font-size: 1.25rem;
-  color: var(--color-bg);
-  background: var(--color-text);
+  object-fit: contain;
   border-radius: var(--radius-sm);
-  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), color var(--dur) var(--ease);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
 }
 .sidebar-brand:hover .brand-mark {
-  background: var(--color-accent);
-  color: #fff;
-  transform: rotate(-8deg);
+  transform: rotate(360deg);
 }
 .brand-text { display: flex; flex-direction: column; line-height: 1; gap: 4px; }
 .brand-name {
@@ -393,4 +385,5 @@ function handleLogout() {
   .admin-header { padding: 0 18px; }
   .admin-main { padding: 20px 18px 28px; }
 }
+
 </style>

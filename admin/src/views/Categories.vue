@@ -23,7 +23,7 @@
         <div class="cat-card-top">
           <span class="cat-icon-wrap">
             <img v-if="cat.icon && !isEmojiStr(cat.icon)" :src="cat.icon" class="cat-icon-img" alt="" @error="e => e.target.style.display='none'" />
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </span>
           <div class="cat-info">
             <div class="cat-card-name">
@@ -153,7 +153,9 @@ async function doDelete() {
   flex-shrink: 0;
   color: var(--color-text);
 }
-.cat-icon-img { width: 22px; height: 22px; object-fit: contain; }
+.cat-icon-img { width: 22px; height: 22px; object-fit: contain; filter: brightness(0); }
+[data-theme="dark"] .cat-icon-img { filter: brightness(0) invert(1); }
+[data-theme="dark"] .cat-icon-wrap { background: rgba(255,255,255,.08); }
 .cat-info { flex: 1; min-width: 0; }
 .cat-card-name {
   font-family: var(--font-serif);

@@ -53,8 +53,10 @@
             <td>
               <img
                 v-if="link.icon"
-                :src="link.icon" alt=""
-                style="width:20px;height:20px;border-radius:4px;object-fit:contain"
+                :src="link.icon + '?v=' + iconVersion"
+                :key="link.icon"
+                class="cell-icon"
+                alt=""
                 loading="lazy"
                 @error="e => e.target.style.display='none'"
               />
@@ -124,6 +126,7 @@ const filterCatId = ref('')
 const showModal   = ref(false)
 const editingLink = ref(null)
 const deletingLink = ref(null)
+const iconVersion  = ref(0)
 
 const filteredLinks = computed(() => {
   let list = data.links
@@ -156,8 +159,8 @@ async function handleSave(formData) {
     await data.addLink(formData)
   }
   showModal.value = false
-  // 刷新以获取最新 category_name
   await data.fetchLinks()
+  iconVersion.value++   // 强制刷新图标预览缓存
 }
 
 async function doDelete() {
@@ -207,6 +210,8 @@ async function doDelete() {
   transition: background var(--dur-micro) var(--ease);
 }
 .links-table tbody tr:hover td { background: var(--color-surface-2); }
+.cell-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: contain; }
+[data-theme="dark"] .cell-icon { background: rgba(255,255,255,.08); padding: 2px; }
 
 .link-title-cell {
   font-family: var(--font-serif);

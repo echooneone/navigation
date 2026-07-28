@@ -78,28 +78,67 @@ function iconExtFromType(contentType = '') {
   return '.png';
 }
 
+// fetch 超时封装
+function fetchWithTimeout(url, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function fetchAndCacheFaviconByUrl(inputUrl) {
   const hostname = normalizeHostname(inputUrl);
   const hostKey = safeHost(hostname);
 
+  // 检查本地缓存
   const existed = fs.readdirSync(ICON_DIR)
     .find((name) => name.startsWith(`auto_${hostKey}.`));
   if (existed) {
     return `/uploads/icons/${existed}`;
   }
 
-  const upstream = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`;
-  const response = await fetch(upstream);
-  if (!response.ok) {
-    throw new Error(`抓取 favicon 失败: HTTP ${response.status}`);
+  let buffer = null;
+  let ext = '.png';
+
+  // 策略 1：解析目标网站首页 HTML，提取 <link rel="icon">
+  try {
+    const resp = await fetchWithTimeout(`https://${hostname}`, 6000);
+    if (resp.ok) {
+      const html = await resp.text();
+      const match = html.match(/<link[^>]*rel=["'](?:shortcut\s+)?icon["'][^>]*href=["']([^"']+)["']/i)
+                 || html.match(/<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:shortcut\s+)?icon["']/i);
+      if (match) {
+        let iconUrl = match[1].trim();
+        if (iconUrl.startsWith('//')) iconUrl = 'https:' + iconUrl;
+        else if (iconUrl.startsWith('/')) iconUrl = `https://${hostname}${iconUrl}`;
+        else if (!iconUrl.startsWith('http')) iconUrl = `https://${hostname}/${iconUrl}`;
+
+        const iconResp = await fetchWithTimeout(iconUrl, 6000);
+        if (iconResp.ok) {
+          buffer = Buffer.from(await iconResp.arrayBuffer());
+          ext = iconExtFromType(iconResp.headers.get('content-type') || '');
+        }
+      }
+    }
+  } catch { /* 网站不可达或解析失败，继续下一条策略 */ }
+
+  // 策略 2：直接请求 /favicon.ico
+  if (!buffer) {
+    try {
+      const resp = await fetchWithTimeout(`https://${hostname}/favicon.ico`, 6000);
+      if (resp.ok) {
+        buffer = Buffer.from(await resp.arrayBuffer());
+        ext = iconExtFromType(resp.headers.get('content-type') || '');
+      }
+    } catch { /* 继续 */ }
   }
 
-  const ext = iconExtFromType(response.headers.get('content-type') || '');
+  if (!buffer) {
+    throw new Error(`无法获取 ${hostname} 的图标`);
+  }
+
   const filename = `auto_${hostKey}${ext}`;
   const targetPath = path.join(ICON_DIR, filename);
-  const buffer = Buffer.from(await response.arrayBuffer());
   fs.writeFileSync(targetPath, buffer);
-
   return `/uploads/icons/${filename}`;
 }
 
@@ -126,6 +165,22 @@ app.get('/api/favicon/cache', authMiddleware, async (req, res) => {
   } catch (error) {
     res.json({ success: false, message: error.message || '抓取图标失败' });
   }
+});
+
+// Favicon 图片直出（预设预览用，仅返回已缓存的图标，404 时前端显示文字兜底）
+app.get('/api/favicon/img', (req, res) => {
+  const { domain } = req.query;
+  if (!domain) return res.status(400).end();
+
+  const hostKey = domain.toLowerCase().replace(/[^a-z0-9.-]/g, '_');
+  try {
+    const files = fs.readdirSync(ICON_DIR);
+    const hit = files.find(f => f.startsWith(`auto_${hostKey}.`));
+    if (hit) {
+      return res.sendFile(path.join(ICON_DIR, hit));
+    }
+  } catch {}
+  res.status(404).end();
 });
 
 // 客户端上传 favicon（客户端有谷歌访问权但服务端没有时使用）
@@ -183,20 +238,34 @@ app.get('/api/health', (req, res) => {
 
 // ══ 静态文件（API 路由之后，不会覆盖 /api/* 路径）════════════
 
+// 静态文件缓存策略：uploads 永久不变，admin 带构建 hash 可长期缓存，前台适中
+const STATIC_OPTS_UPLOADS = { maxAge: '365d', immutable: true };
+const STATIC_OPTS_ADMIN   = { maxAge: '30d',  immutable: true };
+const STATIC_OPTS_FRONT   = { maxAge: '7d' };
+
 // 上传的图标
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), STATIC_OPTS_UPLOADS));
 
 // 管理后台 SPA — 先静态资源，再 fallback 处理前端路由
-app.use('/admin', express.static(path.join(__dirname, '../admin/dist')));
+app.use('/admin', express.static(path.join(__dirname, '../admin/dist'), STATIC_OPTS_ADMIN));
 app.get(['/admin', '/admin/*'], (req, res) =>
   res.sendFile(path.resolve(__dirname, '../admin/dist/index.html'))
 );
 
-// 前台展示页 — 根目录静态，兜底返回 index.html
-app.use(express.static(path.join(__dirname, '../frontend')));
-app.get('*', (req, res) =>
-  res.sendFile(path.resolve(__dirname, '../frontend/index.html'))
-);
+// 前台展示页 — CSS/JS/图片长期缓存，HTML 不缓存
+const FRONT_DIR = path.join(__dirname, '../frontend');
+app.use(express.static(FRONT_DIR, {
+  maxAge: '7d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
+app.get('*', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.sendFile(path.resolve(FRONT_DIR, 'index.html'));
+});
 
 // ══ 错误处理 ═════════════════════════════════════════════════
 app.use((err, req, res, _next) => {

@@ -25,7 +25,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <span class="sidebar-brand">
-        <span class="sidebar-brand-mark">N</span>
+        <img class="sidebar-brand-mark" src="/favicon.ico" alt="logo" />
         <span class="sidebar-brand-text">导航</span>
       </span>
     </div>
@@ -93,16 +93,22 @@
       <div class="search-bar" role="search">
         <div class="engine-picker" id="enginePicker">
           <button class="engine-current" id="engineCurrent" aria-haspopup="listbox">
-            <span id="engineLabel">百度</span>
+            <img id="engineIcon" class="engine-icon" src="/uploads/icons/auto_www.baidu.com.ico" alt="" />
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
           <ul class="engine-dropdown" id="engineDropdown" role="listbox" aria-label="选择搜索引擎">
-            <li class="engine-option" role="option" data-engine="bing" data-url="https://www.bing.com/search?q=">必应</li>
-            <li class="engine-option active" role="option" data-engine="baidu" data-url="https://www.baidu.com/s?wd=">百度</li>
-            <li class="engine-option" role="option" data-engine="google" data-url="https://www.google.com/search?q=">谷歌</li>
+            <li class="engine-option" role="option" data-engine="bing" data-icon="/uploads/icons/auto_www.bing.com.ico" data-url="https://www.bing.com/search?q=">
+              <img src="/uploads/icons/auto_www.bing.com.ico" alt="必应" />
+            </li>
+            <li class="engine-option active" role="option" data-engine="baidu" data-icon="/uploads/icons/auto_www.baidu.com.ico" data-url="https://www.baidu.com/s?wd=">
+              <img src="/uploads/icons/auto_www.baidu.com.ico" alt="百度" />
+            </li>
+            <li class="engine-option" role="option" data-engine="google" data-icon="/uploads/icons/auto_www.google.com.png" data-url="https://www.google.com/search?q=">
+              <img src="/uploads/icons/auto_www.google.com.png" alt="谷歌" />
+            </li>
           </ul>
         </div>
         <div class="search-divider" aria-hidden="true"></div>
@@ -123,6 +129,9 @@
         </button>
       </div>
     </div>
+
+    <!-- 搜索引擎遮罩（page-main 内部，同堆叠上下文，低于 search-section 的 z-index:10） -->
+    <div class="engine-backdrop" id="engineBackdrop"></div>
 
     <!-- 内容 -->
     <main class="content-area" id="siteMain">

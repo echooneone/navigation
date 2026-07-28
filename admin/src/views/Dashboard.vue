@@ -206,6 +206,7 @@ const catStats = computed(() => {
 .recent-item:last-child { border-bottom: none; }
 .recent-item:hover { padding-left: 6px; }
 .recent-icon { width: 26px; height: 26px; border-radius: var(--radius-xs); object-fit: contain; flex-shrink: 0; }
+[data-theme="dark"] .recent-icon { background: rgba(255,255,255,.08); padding: 2px; }
 .recent-icon-placeholder {
   width: 26px;
   height: 26px;

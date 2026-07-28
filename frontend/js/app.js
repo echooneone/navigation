@@ -27,8 +27,9 @@ const hamburger        = document.getElementById('hamburger');
 const sidebarCollapseBtn = document.getElementById('sidebarCollapseBtn'); // 可能为 null，已移除按钮
 const linkTargetBtn    = document.getElementById('linkTargetBtn');
 const engineCurrent    = document.getElementById('engineCurrent');
-const engineLabel      = document.getElementById('engineLabel');
+const engineIcon       = document.getElementById('engineIcon');
 const engineDropdown   = document.getElementById('engineDropdown');
+const engineBackdrop   = document.getElementById('engineBackdrop');
 const searchGo         = document.getElementById('searchGo');
 const searchBarEl      = document.querySelector('.search-bar');
 
@@ -201,6 +202,7 @@ function makeIconImg(url, className, onFail) {
   img.className = className;
   img.alt = '';
   img.loading = 'lazy';
+  img.decoding = 'async';
   img.src = url;
 
   if (status === 'ok') {
@@ -313,11 +315,14 @@ function renderSidebar() {
       closeSidebar();
       if (pageIsActive) {
         const idx = pageOrder[String(cat.id)];
-        if (idx !== undefined) goToPage(idx);
+        if (idx !== undefined) { goToPage(idx); flashGroupTitle(cat.id); }
         return;
       }
       const sec = document.getElementById(`cat-${cat.id}`);
-      if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (sec) {
+        sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        flashGroupTitle(cat.id);
+      }
     });
     sidebarNav.appendChild(li);
   }
@@ -429,7 +434,7 @@ function applyEngine(opt, persist = true) {
   if (!opt) return;
   engineDropdown.querySelectorAll('.engine-option').forEach(o => o.classList.remove('active'));
   opt.classList.add('active');
-  engineLabel.textContent = opt.textContent;
+  engineIcon.src = opt.dataset.icon || '';
   currentEngineUrl = opt.dataset.url;
   if (persist) localStorage.setItem(LS_ENGINE, opt.dataset.engine);
 }
@@ -442,18 +447,35 @@ function initEngineDropdown() {
     : engineDropdown.querySelector('.engine-option.active');
   applyEngine(restore, false);
 
+  function openEngineDropdown() {
+    engineDropdown.classList.add('open');
+    engineBackdrop.classList.add('open');
+    searchBarEl.classList.add('engine-open');
+  }
+  function closeEngineDropdown() {
+    engineDropdown.classList.remove('open');
+    engineBackdrop.classList.remove('open');
+    searchBarEl.classList.remove('engine-open');
+  }
+
   engineCurrent.addEventListener('click', (e) => {
     e.stopPropagation();
-    engineDropdown.classList.toggle('open');
+    engineDropdown.classList.contains('open') ? closeEngineDropdown() : openEngineDropdown();
   });
 
-  document.addEventListener('click', () => engineDropdown.classList.remove('open'));
+  engineBackdrop.addEventListener('click', closeEngineDropdown);
+
+  document.addEventListener('click', (e) => {
+    if (!searchBarEl.contains(e.target)) {
+      closeEngineDropdown();
+    }
+  });
 
   engineDropdown.querySelectorAll('.engine-option').forEach(opt => {
     opt.addEventListener('click', (e) => {
       e.stopPropagation();
       applyEngine(opt, true);
-      engineDropdown.classList.remove('open');
+      closeEngineDropdown();
     });
   });
 
@@ -461,6 +483,25 @@ function initEngineDropdown() {
     const q = searchInput.value.trim();
     if (q) window.open(currentEngineUrl + encodeURIComponent(q), '_blank');
   });
+}
+
+// ─── 分类标题高亮动画 ───────────────────────────────────────
+function flashGroupTitle(catId) {
+  let sec;
+  if (pageIsActive && pageTrackEl) {
+    const slides = pageTrackEl.children;
+    const realIdx = totalPages > 1 ? currentPage + 1 : 0;
+    if (slides[realIdx]) {
+      sec = slides[realIdx].querySelector(`#cat-${catId}`);
+    }
+  } else {
+    sec = document.getElementById(`cat-${catId}`);
+  }
+  if (!sec) return;
+  const title = sec.querySelector('.group-title');
+  if (!title) return;
+  title.classList.add('flash');
+  title.addEventListener('animationend', () => title.classList.remove('flash'), { once: true });
 }
 
 // ─── 侧边栏移动端 ───────────────────────────────────────────
@@ -513,8 +554,12 @@ async function loadData() {
     groupContainer.classList.remove('hidden');
 
     if (scrollMode === 'page') {
-      initPageMode();
-      backTop.style.display = 'none';
+      if (window.innerWidth >= 768) {
+        initPageMode();
+        backTop.style.display = 'none';
+      }
+      // 监听窗口变化：窄→宽启用分页，宽→窄关闭分页
+      window.addEventListener('resize', _onPageModeResize);
     }
   } catch (err) {
     loadingState.innerHTML = `<span style="color:var(--color-text-secondary)">数据加载失败，请检查 API 服务是否运行。<br><small>${escapeHtml(err.message)}</small></span>`;
@@ -562,15 +607,20 @@ function destroyPageMode() {
   pageDotEls     = [];
   pageOrder      = {};
   actualTrackPos = 1;
-  window.removeEventListener('resize', _onPageModeResize);
 }
 
 let _resizeRebuildTimer = null;
 function _onPageModeResize() {
   clearTimeout(_resizeRebuildTimer);
   _resizeRebuildTimer = setTimeout(() => {
-    destroyPageMode();
-    initPageMode();
+    const narrow = window.innerWidth < 768;
+    if (narrow) {
+      if (pageIsActive) { destroyPageMode(); backTop.style.display = ''; }
+    } else {
+      if (pageIsActive) { destroyPageMode(); }
+      initPageMode();
+      backTop.style.display = 'none';
+    }
   }, 200);
 }
 
@@ -589,12 +639,19 @@ function initPageMode() {
   contentArea.classList.add('page-mode');
   contentArea.offsetHeight; // 强制 reflow，确保高度约束生效
 
-  // slide 的 padding-bottom 为 24px；section 之间 margin-bottom 为 36px（来自 .link-group）
-  // availH = 可放内容的净高度
-  const DOTS_H    = 56; // .page-dots 区域高度
-  const SLIDE_PAD = 24; // .page-slide padding-bottom
-  const SEC_GAP   = 36; // .link-group margin-bottom（offsetHeight 不含 margin）
-  const availH    = contentArea.clientHeight - DOTS_H - SLIDE_PAD;
+  // 动态读取 slide 和 section 的 CSS 值，适配不同断点
+  const DOTS_H      = 56;
+  // 创建一个临时 slide 来读取其 padding（不同断点不同值）
+  const tmpSlide = document.createElement('div');
+  tmpSlide.className = 'page-slide';
+  tmpSlide.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
+  contentArea.appendChild(tmpSlide);
+  const slideCS = getComputedStyle(tmpSlide);
+  const SLIDE_PAD_T = parseInt(slideCS.paddingTop)  || 28;
+  const SLIDE_PAD_B = parseInt(slideCS.paddingBottom) || 32;
+  contentArea.removeChild(tmpSlide);
+
+  const availH = contentArea.clientHeight - DOTS_H - SLIDE_PAD_T - SLIDE_PAD_B;
 
   // ── 按内容高度贪心打包 ────────────────────────────────────────
   const slideGroups = [[]];
@@ -602,8 +659,9 @@ function initPageMode() {
   pageOrder = {};
 
   for (const section of sections) {
-    // offsetHeight 不含 margin，手动加 SEC_GAP；最后一项多加的 gap 不影响判断
-    const h = section.offsetHeight + SEC_GAP;
+    const secStyle = getComputedStyle(section);
+    const marginB  = parseInt(secStyle.marginBottom) || 56;
+    const h = section.offsetHeight + marginB;
     const m = section.id.match(/^cat-(\d+)$/);
     const catKey = m ? m[1] : 'uncategorized';
 
@@ -668,19 +726,20 @@ function initPageMode() {
 
     // transitionend：停在克隆 slide 时瞬移真实位置（无缝循环）
     pageTrackEl.addEventListener('transitionend', () => {
+      const slideCount = totalPages + 2;
       if (actualTrackPos === 0) {
         currentPage    = totalPages - 1;
         actualTrackPos = currentPage + 1;
         pageTrackEl.style.transition = 'none';
-        pageTrackEl.style.transform  = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+        pageTrackEl.style.transform  = `translateX(${-(actualTrackPos / slideCount * 100)}%)`;
         pageTrackEl.offsetHeight;
         pageTrackEl.style.transition = '';
         pageDotEls.forEach((d, i) => d.classList.toggle('active', i === currentPage));
-      } else if (actualTrackPos === totalPages + 1) {
+      } else if (actualTrackPos === slideCount - 1) {
         currentPage    = 0;
         actualTrackPos = 1;
         pageTrackEl.style.transition = 'none';
-        pageTrackEl.style.transform  = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+        pageTrackEl.style.transform  = `translateX(${-(actualTrackPos / slideCount * 100)}%)`;
         pageTrackEl.offsetHeight;
         pageTrackEl.style.transition = '';
         pageDotEls.forEach((d, i) => d.classList.toggle('active', i === currentPage));
@@ -691,19 +750,21 @@ function initPageMode() {
   }
 
   updatePageLayout();
-  window.addEventListener('resize', _onPageModeResize);
 }
 
 function updatePageLayout() {
   const wrap = document.getElementById('pageTrackWrap');
   if (!wrap || !pageTrackEl) return;
   pageSlideWidth = wrap.clientWidth;
-  pageTrackEl.querySelectorAll('.page-slide').forEach(s => { s.style.width = pageSlideWidth + 'px'; });
   const slideCount = totalPages > 1 ? totalPages + 2 : 1;
-  pageTrackEl.style.width = (pageSlideWidth * slideCount) + 'px';
+  // 用百分比避免亚像素漏光
+  pageTrackEl.style.width = (slideCount * 100) + '%';
+  pageTrackEl.querySelectorAll('.page-slide').forEach(s => {
+    s.style.width = (100 / slideCount) + '%';
+  });
   pageTrackEl.style.transition = 'none';
   actualTrackPos = totalPages > 1 ? currentPage + 1 : 0;
-  pageTrackEl.style.transform = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+  pageTrackEl.style.transform = `translateX(${-(actualTrackPos / slideCount * 100)}%)`;
   pageTrackEl.offsetHeight;
   pageTrackEl.style.transition = '';
 }
@@ -713,18 +774,15 @@ function updatePageLayout() {
  * 传入 -1 表示「向左越界 → 显示末页克隆」；传入 totalPages 表示「向右越界 → 显示首页克隆」。
  */
 function goToPage(idx) {
-  if (!pageIsActive) return;
-  // 单页时无需移动
-  if (totalPages <= 1) return;
+  if (!pageIsActive || totalPages <= 1) return;
 
+  const slideCount = totalPages + 2;
   let trackIdx;
   if (idx < 0) {
-    // 向左循环：跳到轨道位置 0（末页克隆）
     trackIdx = 0;
     pageDotEls.forEach((d, i) => d.classList.toggle('active', i === totalPages - 1));
   } else if (idx >= totalPages) {
-    // 向右循环：跳到轨道位置 totalPages+1（首页克隆）
-    trackIdx = totalPages + 1;
+    trackIdx = slideCount - 1;
     pageDotEls.forEach((d, i) => d.classList.toggle('active', i === 0));
   } else {
     currentPage = idx;
@@ -732,7 +790,7 @@ function goToPage(idx) {
     pageDotEls.forEach((d, i) => d.classList.toggle('active', i === currentPage));
   }
   actualTrackPos = trackIdx;
-  pageTrackEl.style.transform = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+  pageTrackEl.style.transform = `translateX(${-(trackIdx / slideCount * 100)}%)`;
 }
 
 function bindPageEvents(wrap) {
@@ -746,33 +804,44 @@ function bindPageEvents(wrap) {
     wheelTimer = setTimeout(() => { wheelTimer = null; }, 420);
   }, { passive: false });
 
-  // 触摸 / 鼠标拖拽
+  // 触摸 / 鼠标拖拽（仅在实际拖拽时捕获指针，避免阻断链接点击）
+  let pointerIsDown = false;
   wrap.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
+    pointerIsDown  = true;
     pageDragStartX = e.clientX;
     pageDragLiveX  = e.clientX;
-    pageDragging   = true;
+    pageDragging   = false;
     pageTrackEl.style.transition = 'none';
-    wrap.setPointerCapture(e.pointerId);
   });
   wrap.addEventListener('pointermove', (e) => {
-    if (!pageDragging) return;
+    if (!pointerIsDown) return;
     pageDragLiveX = e.clientX;
     const delta = pageDragLiveX - pageDragStartX;
-    // 拖拽时以当前真实 track 位置为基准
-    pageTrackEl.style.transform = `translateX(${-(currentPage + 1) * pageSlideWidth + delta}px)`;
+    if (!pageDragging && Math.abs(delta) > 4) {
+      pageDragging = true;
+      wrap.setPointerCapture(e.pointerId);
+    }
+    if (!pageDragging) return;
+    const slideCount = totalPages + 2;
+    const pct = -(currentPage + 1) / slideCount * 100 + (delta / pageSlideWidth) * (100 / slideCount);
+    pageTrackEl.style.transform = `translateX(${pct}%)`;
   });
   const endDrag = () => {
-    if (!pageDragging) return;
+    pointerIsDown = false;
+    if (!pageDragging) {
+      pageTrackEl.style.transition = '';
+      return;
+    }
     pageDragging = false;
     pageTrackEl.style.transition = '';
     const delta = pageDragLiveX - pageDragStartX;
     if      (delta < -PAGE_THRESHOLD) goToPage(currentPage + 1 > totalPages - 1 ? totalPages : currentPage + 1);
     else if (delta >  PAGE_THRESHOLD) goToPage(currentPage - 1 < 0             ? -1         : currentPage - 1);
     else {
-      // 回弹到当前页
+      const slideCount = totalPages + 2;
       actualTrackPos = currentPage + 1;
-      pageTrackEl.style.transform = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+      pageTrackEl.style.transform = `translateX(${-(actualTrackPos / slideCount * 100)}%)`;
     }
   };
   wrap.addEventListener('pointerup', endDrag);
@@ -810,7 +879,9 @@ function bindPageEvents(wrap) {
       e.preventDefault();
       touchLastX = t.clientX;
       pageTrackEl.style.transition = 'none';
-      pageTrackEl.style.transform = `translateX(${-(currentPage + 1) * pageSlideWidth + dx}px)`;
+      const slideCount = totalPages + 2;
+      const pct = -(currentPage + 1) / slideCount * 100 + (dx / pageSlideWidth) * (100 / slideCount);
+      pageTrackEl.style.transform = `translateX(${pct}%)`;
     }
   }, { passive: false });
 
@@ -825,14 +896,28 @@ function bindPageEvents(wrap) {
     if      (delta < -PAGE_THRESHOLD) goToPage(currentPage + 1 > totalPages - 1 ? totalPages : currentPage + 1);
     else if (delta >  PAGE_THRESHOLD) goToPage(currentPage - 1 < 0             ? -1         : currentPage - 1);
     else {
+      const slideCount = totalPages + 2;
       actualTrackPos = currentPage + 1;
-      pageTrackEl.style.transform = `translateX(${-actualTrackPos * pageSlideWidth}px)`;
+      pageTrackEl.style.transform = `translateX(${-(actualTrackPos / slideCount * 100)}%)`;
     }
   };
 
   wrap.addEventListener('touchend', endTouchDrag, { passive: true });
   wrap.addEventListener('touchcancel', endTouchDrag, { passive: true });
 }
+
+// ─── 侧边栏收缩切换 ─────────────────────────────────────────
+const LS_SIDEBAR = 'nav-sidebar-collapsed';
+function initSidebarState() {
+  if (localStorage.getItem(LS_SIDEBAR) === '1') {
+    document.documentElement.classList.add('sidebar-collapsed');
+  }
+}
+function toggleSidebarCollapsed() {
+  const collapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+  localStorage.setItem(LS_SIDEBAR, collapsed ? '1' : '0');
+}
+document.querySelector('.sidebar-brand').addEventListener('click', toggleSidebarCollapsed);
 
 // ─── 事件绑定 ───────────────────────────────────────────────
 themeToggle.addEventListener('click', toggleTheme);
@@ -871,6 +956,7 @@ document.addEventListener('keydown', (e) => {
 // ─── 初始化 ─────────────────────────────────────────────────
 initTheme();
 initSidebar();
+initSidebarState();
 initLinkTarget();
 initEngineDropdown();
 loadData();

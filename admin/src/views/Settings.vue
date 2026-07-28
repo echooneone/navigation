@@ -102,8 +102,8 @@
         <h2 class="section-title">图标本地化迁移</h2>
         <div class="settings-form">
           <p class="form-hint" style="font-size:0.83rem;line-height:1.6">
-            服务器环境无法访问 Google Favicon 时，可通过此功能将已有链接的 Google 图标<br />
-            在当前浏览器下载并上传至服务器，使所有设备均可正常显示图标。
+            将正在使用 Google Favicon 服务的图标替换为本地缓存版本。<br />
+            服务端直接从目标网站抓取原生 favicon 并存至本地，所有设备均可正常显示。
           </p>
           <div v-if="migrateStats" class="migrate-stats">
             <span>共 <b>{{ migrateStats.total }}</b> 个 Google 图标</span>
@@ -205,18 +205,6 @@ const migrating = ref(false)
 const migrateProgress = ref(0)
 const migrateStats = ref(null)
 
-/** 将 Google favicon URL 在客户端下载并转为 base64 dataUrl */
-async function fetchFaviconAsDataUrl(imageUrl) {
-  const resp = await fetch(imageUrl, { mode: 'cors' })
-  if (!resp.ok) throw new Error('fetch failed')
-  const blob = await resp.blob()
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
-}
 
 async function handleMigrateIcons() {
   migrating.value = true
@@ -224,11 +212,10 @@ async function handleMigrateIcons() {
   migrateStats.value = null
 
   try {
-    // 获取所有链接
     const linksRes = await api.get('/links')
     const links = linksRes.data?.data || []
 
-    // 只处理 Google favicon 格式的图标
+    // 找出所有图标 URL 中包含 google.com 的链接
     const googleLinks = links.filter(
       (l) => l.icon && l.icon.includes('google.com/s2/favicons')
     )
@@ -246,28 +233,17 @@ async function handleMigrateIcons() {
 
     for (const link of googleLinks) {
       try {
-        // 从图标 URL 中提取域名
-        const iconUrlObj = new URL(link.icon)
-        const domain = iconUrlObj.searchParams.get('domain') || new URL(link.url).hostname
-
-        // ① 先检查服务端是否已有缓存
-        const checkRes = await api.get(`/favicon/cache?url=${encodeURIComponent(link.url)}`)
-        if (checkRes.data.success && checkRes.data.data?.iconUrl) {
-          // 已缓存，直接更新链接图标
-          await api.put(`/links/${link.id}`, { icon: checkRes.data.data.iconUrl })
+        // 直接调服务端：从目标网站原生抓取 favicon 并缓存到本地
+        const res = await api.get(`/favicon/cache?url=${encodeURIComponent(link.url)}`)
+        if (res.data.success && res.data.data?.iconUrl) {
+          await api.put(`/links/${link.id}`, { icon: res.data.data.iconUrl })
+          done++
         } else {
-          // ② 客户端下载后上传
-          const dataUrl = await fetchFaviconAsDataUrl(link.icon)
-          const uploadRes = await api.post('/favicon/cache-from-client', { domain, dataUrl })
-          if (uploadRes.data.success && uploadRes.data.data?.iconUrl) {
-            await api.put(`/links/${link.id}`, { icon: uploadRes.data.data.iconUrl })
-          } else {
-            throw new Error('upload failed')
-          }
+          throw new Error(res.data.message || '服务端返回失败')
         }
-        done++
-      } catch {
+      } catch (e) {
         failed++
+        console.error(`[迁移失败] ${link.title}: ${e.message}`)
       }
 
       migrateStats.value = { total, done, failed }
@@ -275,12 +251,11 @@ async function handleMigrateIcons() {
     }
 
     if (failed === 0) {
-      showToast(`✓ 全部 ${total} 个图标已迁移到本地`, 'success')
+      showToast(`全部 ${total} 个图标已迁移到本地`, 'success')
     } else {
       showToast(`完成：${done} 成功，${failed} 失败`, 'warning')
     }
 
-    // 刷新数据 store（让 Links 页面即时看到新图标路径）
     await data.fetchAll()
   } catch (e) {
     showToast('迁移过程出错：' + (e.message || '未知错误'), 'error')
