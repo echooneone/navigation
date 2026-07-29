@@ -206,11 +206,9 @@ function makeIconImg(url, className, onFail) {
   img.src = url;
 
   if (status === 'ok') {
-    // 已知可用，不再绑定事件，直接使用（浏览器会从 disk cache 加载）
     return img;
   }
 
-  // 未知状态：等待加载结果再写缓存
   img.addEventListener('load',  () => iconCacheSet(url, 'ok'),  { once: true });
   img.addEventListener('error', () => { iconCacheSet(url, 'fail'); onFail(); }, { once: true });
   return img;
@@ -243,6 +241,7 @@ function createCard(link) {
       if (existingImg) iconWrap.replaceChild(sp, existingImg);
       else iconWrap.appendChild(sp);
     };
+    iconWrap.style.setProperty('--icon-url', `url(${link.icon})`);
     const img = makeIconImg(link.icon, 'card-icon', showFallback);
     if (img) iconWrap.appendChild(img);
     else showFallback();
@@ -952,6 +951,39 @@ document.addEventListener('keydown', (e) => {
     if (q) window.open(currentEngineUrl + encodeURIComponent(q), '_blank');
   }
 });
+
+// ─── 卡片鼠标跟随流光（圆形影响范围，同时影响多个卡片） ─────
+(function initCardGlow() {
+  const RADIUS = 840; // 影响半径 px
+  let raf = 0;
+  document.addEventListener('mousemove', (e) => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      const mx = e.clientX;
+      const my = e.clientY;
+      const cards = document.querySelectorAll('.link-card');
+      for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = mx - cx;
+        const dy = my - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < RADIUS) {
+          const t = 1 - dist / RADIUS;           // 0→1，越近越亮
+          const ease = t * t * (3 - 2 * t);       // smoothstep
+          card.style.setProperty('--mx', `${((mx - rect.left) / rect.width) * 100}%`);
+          card.style.setProperty('--my', `${((my - rect.top) / rect.height) * 100}%`);
+          card.style.setProperty('--glow', ease.toFixed(3));
+        } else {
+          card.style.setProperty('--glow', '0');
+        }
+      }
+    });
+  });
+})();
 
 // ─── 初始化 ─────────────────────────────────────────────────
 initTheme();
