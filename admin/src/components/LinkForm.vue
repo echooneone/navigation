@@ -357,9 +357,9 @@ function saveCustomIcons() {
   localStorage.setItem(LS_CUSTOM_ICONS, JSON.stringify(customIcons.value))
 }
 function addCustomIcon(url) {
-  if (!url || !url.startsWith('/uploads/')) return
+  if (!url || !url.startsWith('/uploads/icons/icon_')) return
   if (customIcons.value.find(c => c.url === url)) return
-  const name = url.split('/').pop().replace(/^auto_/, '').replace(/\.[^.]+$/, '')
+  const name = url.split('/').pop().replace(/\.[^.]+$/, '')
   customIcons.value.unshift({ url, label: name })
   if (customIcons.value.length > 20) customIcons.value.pop()
   saveCustomIcons()

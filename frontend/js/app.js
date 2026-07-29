@@ -284,7 +284,7 @@ function renderSidebar() {
     li.title = name;  // 折叠时显示 tooltip
 
     // 图标：有效 URL 则显示图片，否则显示首字母徽章
-    const isUrl = cat.icon && cat.icon.startsWith('http');
+    const isUrl = cat.icon && (cat.icon.startsWith('http') || cat.icon.startsWith('/'));
     if (isUrl) {
       const showBadge = () => {
         const badge = document.createElement('span');
