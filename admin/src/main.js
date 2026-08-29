@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router/index.js'
 import App from './App.vue'
+import { useAuthStore } from './stores/auth.js'
 import './style.css'
 
 // 在挂载前同步设置主题，避免闪烁
@@ -11,7 +12,16 @@ import './style.css'
   document.documentElement.setAttribute('data-theme', saved ?? (preferDark ? 'dark' : 'light'))
 })()
 
-const app = createApp(App)
-app.use(createPinia())
-app.use(router)
-app.mount('#app')
+async function bootstrap() {
+  const app = createApp(App)
+  const pinia = createPinia()
+  app.use(pinia)
+
+  // 挂载后台界面前先由服务端验证本地 Token，避免无效登录态短暂进入后台。
+  await useAuthStore(pinia).restoreSession()
+
+  app.use(router)
+  app.mount('#app')
+}
+
+bootstrap()

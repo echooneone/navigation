@@ -426,6 +426,16 @@ function doSearch(query) {
   for (const link of matched) searchResultGrid.appendChild(createCard(link));
 }
 
+function confirmSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+
+  window.open(currentEngineUrl + encodeURIComponent(q), '_blank');
+  clearTimeout(searchTimeout);
+  searchInput.value = '';
+  doSearch('');
+}
+
 // ─── 搜索引擎 ───────────────────────────────────────────────
 const LS_ENGINE = 'nav-engine';
 
@@ -478,10 +488,7 @@ function initEngineDropdown() {
     });
   });
 
-  searchGo.addEventListener('click', () => {
-    const q = searchInput.value.trim();
-    if (q) window.open(currentEngineUrl + encodeURIComponent(q), '_blank');
-  });
+  searchGo.addEventListener('click', confirmSearch);
 }
 
 // ─── 分类标题高亮动画 ───────────────────────────────────────
@@ -947,8 +954,7 @@ document.addEventListener('keydown', (e) => {
     closeSidebar();
   }
   if (e.key === 'Enter' && document.activeElement === searchInput) {
-    const q = searchInput.value.trim();
-    if (q) window.open(currentEngineUrl + encodeURIComponent(q), '_blank');
+    confirmSearch();
   }
 });
 

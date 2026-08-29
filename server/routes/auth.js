@@ -26,16 +26,14 @@ router.post('/login', (req, res) => {
 
   const token = jwt.sign(
     { id: admin.id, username: admin.username },
-    JWT_SECRET,
-    { expiresIn: '7d' }
+    JWT_SECRET
   );
 
   res.json({
     success: true,
     data: {
       token,
-      username: admin.username,
-      expiresIn: 7 * 24 * 3600
+      username: admin.username
     }
   });
 });

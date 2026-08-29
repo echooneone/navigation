@@ -8,13 +8,20 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
-  function restoreSession() {
+  async function restoreSession() {
     const saved = localStorage.getItem('nav-admin-token')
     const savedUser = localStorage.getItem('nav-admin-username')
-    if (saved) {
+    if (!saved) return false
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${saved}`
+    try {
+      const res = await api.get('/auth/me')
       token.value = saved
-      username.value = savedUser || 'admin'
-      api.defaults.headers.common['Authorization'] = `Bearer ${saved}`
+      username.value = res.data.data.username || savedUser || 'admin'
+      return true
+    } catch {
+      logout()
+      return false
     }
   }
 
